@@ -1,11 +1,6 @@
 name: CI - Run checks
 
-on:
-  workflow_call:
-  pull_request:
-  push:
-    branches:
-      - main
+on: [push, pull_request]
 
 jobs:
   build:
