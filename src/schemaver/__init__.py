@@ -1,1 +1,1 @@
-"""Store the code for the schemaver package."""
+"""Store the source code for the schemaver package."""
