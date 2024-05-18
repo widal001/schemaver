@@ -13,9 +13,9 @@ check-prereqs:
 install: check-prereqs
 	@echo "=> Installing python dependencies"
 	poetry install
-	poetry run pre-commit install
 
 setup: install lint test-audit
+	poetry run pre-commit install
 
 ##########################
 # Formatting and linting #

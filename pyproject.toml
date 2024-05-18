@@ -7,7 +7,7 @@ version = "0.1.0"
 
 [tool.poetry.dependencies]
 mypy = "^1.10.0"
-python = ">=3.12,<4.0"
+python = ">=3.11,<4.0"
 ruff = "^0.4.4"
 
 [tool.poetry.group.dev.dependencies]
