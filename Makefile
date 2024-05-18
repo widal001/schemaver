@@ -15,6 +15,8 @@ install: check-prereqs
 	poetry install
 	poetry run pre-commit install
 
+setup: install lint test-audit
+
 ##########################
 # Formatting and linting #
 ##########################
