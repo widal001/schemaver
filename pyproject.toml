@@ -6,7 +6,9 @@ name = "schemaver"
 version = "0.1.0"
 
 [tool.poetry.dependencies]
+mypy = "^1.10.0"
 python = ">=3.12,<4.0"
+ruff = "^0.4.4"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.4.2"
@@ -40,11 +42,26 @@ exclude = '''
 '''
 include = '\.pyi?$'
 line-length = 79
-[tool.liccheck]
 
 [tool.pylint."MESSAGE CONTROL"]
 disable = [
-  "C0114", # Disables module docstrings
-  "R0201", # Disables method could have been a function
   "R0903", # Disables too few public methods
+  "R0801", # Disables duplicate code warning
 ]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+extend-safe-fixes = [
+  "D400", # docstrings should end with a period
+  "D415", # docstrings should end with a period, question mark, or exclamation point
+]
+ignore = [
+  "ANN101", # missing type annotation for self
+  "ANN102", # missing type annotation for cls
+  "D203", # no blank line before class
+  "D212", # multi-line summary first line
+  "FA", # flake8-future-annotations ruleset
+]
+select = ["ALL"]
