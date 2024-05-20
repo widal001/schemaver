@@ -6,9 +6,9 @@ name = "schemaver"
 version = "0.1.0"
 
 [tool.poetry.dependencies]
+deepdiff = "^7.0.1"
 mypy = "^1.10.0"
 python = ">=3.11,<4.0"
-ruff = "^0.4.4"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.4.2"
@@ -17,6 +17,7 @@ pre-commit = "^3.7.1"
 pylint = "^3.2.1"
 pytest = "^8.2.0"
 pytest-cov = "^5.0.0"
+ruff = "^0.4.4"
 
 [build-system]
 build-backend = "poetry.core.masonry.api"
@@ -65,3 +66,9 @@ ignore = [
   "FA", # flake8-future-annotations ruleset
 ]
 select = ["ALL"]
+
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = [
+  "deepdiff.*",
+]
