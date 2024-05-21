@@ -24,10 +24,10 @@ BASE_SCHEMA = {
 def assert_release_kind(got: Release, wanted: ChangeLevel):
     """Confirm the release matches expectations."""
     assert got.kind == wanted
-    assert len(getattr(got.changes, wanted.value)) > 0
+    assert len(getattr(got.changelog, wanted.value)) > 0
     for level in ChangeLevel:
         if level not in (wanted, ChangeLevel.NONE):
-            assert not getattr(got.changes, level.value)
+            assert not getattr(got.changelog, level.value)
 
 
 class TestAddingProp:
@@ -178,6 +178,37 @@ class TestAddingProp:
         # assert
         assert_release_kind(got=release, wanted=ChangeLevel.REVISION)
 
+    def test_add_prop_to_nested_object(self):
+        """Nested props should be accessed through recursion."""
+        # arrange - add a nested object
+        parent_prop = "parentObject"
+        nested_prop = "nestedProp"
+        old = deepcopy(BASE_SCHEMA)
+        old["properties"][parent_prop] = {
+            "type": "object",
+            "properties": {nested_prop: {"type": "integer"}},
+            "additionalProperties": False,
+        }
+        # arrange - remove nested property
+        new_prop = "newProp"
+        new = deepcopy(old)
+        new["properties"][parent_prop]["properties"][new_prop] = {
+            "type": "string",
+            "description": "A new optional string in a nested object.",
+        }
+        # act
+        release = compare_schemas(
+            new_schema=new,
+            previous_schema=old,
+            old_version=BASE_VERSION,
+        )
+        # assert
+        assert_release_kind(got=release, wanted=ChangeLevel.ADDITION)
+        change = release.changelog.changes[0]
+        assert new_prop in change.location
+        assert parent_prop in change.location
+        assert change.depth == 1
+
 
 class TestRemovingProp:
     """Test result when removing a prop from the old schema."""
@@ -323,3 +354,30 @@ class TestRemovingProp:
         )
         # assert
         assert_release_kind(got=release, wanted=ChangeLevel.ADDITION)
+
+    def test_remove_prop_from_nested_object(self):
+        """Nested props should be accessed through recursion."""
+        # arrange - add a nested object
+        parent_prop = "parentObject"
+        nested_prop = "nestedProp"
+        old = deepcopy(BASE_SCHEMA)
+        old["properties"][parent_prop] = {
+            "type": "object",
+            "properties": {nested_prop: {"type": "integer"}},
+            "additionalProperties": False,
+        }
+        # arrange - remove nested property
+        new = deepcopy(old)
+        del new["properties"][parent_prop]["properties"][nested_prop]
+        # act
+        release = compare_schemas(
+            new_schema=new,
+            previous_schema=old,
+            old_version=BASE_VERSION,
+        )
+        # assert
+        assert_release_kind(got=release, wanted=ChangeLevel.REVISION)
+        change = release.changelog.changes[0]
+        assert nested_prop in change.location
+        assert parent_prop in change.location
+        assert change.depth == 1

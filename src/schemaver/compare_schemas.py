@@ -23,7 +23,7 @@ class Release:
     new_version: str
     old_version: str
     kind: ChangeLevel
-    changes: Changelog
+    changelog: Changelog
 
 
 @dataclass
@@ -49,12 +49,12 @@ class Changelog:
 
     @property
     def revisions(self) -> list[SchemaChange]:
-        """Get the model-level changes."""
+        """Get the revision-level changes."""
         return self._filter_changes(ChangeLevel.REVISION)
 
     @property
     def additions(self) -> list[SchemaChange]:
-        """Get the model-level changes."""
+        """Get the addition-level changes."""
         return self._filter_changes(ChangeLevel.ADDITION)
 
     def _filter_changes(self, level: ChangeLevel) -> list[SchemaChange]:
@@ -133,13 +133,13 @@ def compare_schemas(
         new_version="2-0-0",
         old_version=old_version,
         kind=release_kind,
-        changes=changelog,
+        changelog=changelog,
     )
 
 
 def record_prop_change(  # noqa: PLR0913
     prop: str,
-    location: str,
+    context: SchemaContext,
     lookup: dict,
     diff: DiffType,
     required: Required,
@@ -152,8 +152,9 @@ def record_prop_change(  # noqa: PLR0913
     )
     return SchemaChange(
         kind=lookup[diff][required][extra_props],
+        depth=context.curr_depth,
         description=message,
-        location=location,
+        location=context.field_name + f"['properties']['{prop}]",
     )
 
 
@@ -207,7 +208,7 @@ def parse_changes_recursively(
         for prop in object_diff.added.required:
             change = record_prop_change(
                 prop=prop,
-                location=context.field_name,
+                context=context,
                 lookup=PROP_LOOKUP,
                 diff=DiffType.ADDED,
                 required=Required.YES,
@@ -217,7 +218,7 @@ def parse_changes_recursively(
         for prop in object_diff.added.optional:
             change = record_prop_change(
                 prop=prop,
-                location=context.field_name,
+                context=context,
                 lookup=PROP_LOOKUP,
                 diff=DiffType.ADDED,
                 required=Required.NO,
@@ -228,7 +229,7 @@ def parse_changes_recursively(
         for prop in object_diff.removed.optional:
             change = record_prop_change(
                 prop=prop,
-                location=context.field_name,
+                context=context,
                 lookup=PROP_LOOKUP,
                 diff=DiffType.REMOVED,
                 required=Required.NO,
@@ -238,7 +239,7 @@ def parse_changes_recursively(
         for prop in object_diff.removed.required:
             change = record_prop_change(
                 prop=prop,
-                location=context.field_name,
+                context=context,
                 lookup=PROP_LOOKUP,
                 diff=DiffType.REMOVED,
                 required=Required.YES,
