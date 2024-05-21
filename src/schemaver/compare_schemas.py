@@ -3,53 +3,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
-from pprint import pprint
 
-from deepdiff.diff import DeepDiff
-
-
-class ChangeType(Enum):
-    """
-    Characterize a change using the SchemaVer hierarchy.
-
-    This hierarchy is modeled after the Major.Minor.Patch hierarchy in SemVer.
-    Additional information about each change type be found at:
-    https://docs.snowplow.io/docs/pipeline-components-and-applications/iglu/common-architecture/schemaver/
-    """
-
-    MODEL = "model"
-    REVISION = "revision"
-    ADDITION = "addition"
-    NONE = "no-change"
-
-
-class PropDiffType(Enum):
-    """What happened to a prop between schemas."""
-
-    ADDED = "added"
-    REMOVED = "removed"
-    CHANGED = "changed"
-
-
-class RequiredStatus(Enum):
-    """How has the prop's required status changed."""
-
-    ALWAYS_REQUIRED = 1
-    ALWAYS_OPTIONAL = 2
-    NEWLY_REQUIRED = 3
-    NEWLY_OPTIONAL = 4
-    WAS_REQUIRED = 5
-    WAS_OPTIONAL = 6
-
-
-class ExtraPropsAllowed(Enum):
-    """Does the object support additional props."""
-
-    ALWAYS = 1
-    NEVER = 2
-    NO_TO_YES = 3
-    YES_TO_NO = 4
+from schemaver.lookup import (
+    METADATA_FIELDS,
+    PROP_LOOKUP,
+    VALIDATION_FIELDS,
+    ChangeLevel,
+    DiffType,
+    ExtraProps,
+    Required,
+    ValidationField,
+)
 
 
 @dataclass
@@ -58,26 +22,44 @@ class Release:
 
     new_version: str
     old_version: str
-    change_level: ChangeType
-    changes: ChangeLog
-
-
-@dataclass
-class ChangeLog:
-    """List individual updates made between schema versions."""
-
-    model: list[SchemaChange]
-    revision: list[SchemaChange]
-    addition: list[SchemaChange]
+    kind: ChangeLevel
+    changes: Changelog
 
 
 @dataclass
 class SchemaChange:
     """Characterize an individual change made to a JSON schema."""
 
-    kind: ChangeType
+    kind: ChangeLevel
     description: str
-    location: str = ""
+    depth: int = 0
+    location: str = "root"
+
+
+@dataclass
+class Changelog:
+    """Record and categorize a list of schema changes."""
+
+    changes: list[SchemaChange]
+
+    @property
+    def model_changes(self) -> list[SchemaChange]:
+        """Get the model-level changes."""
+        return self._filter_changes(ChangeLevel.MODEL)
+
+    @property
+    def revisions(self) -> list[SchemaChange]:
+        """Get the model-level changes."""
+        return self._filter_changes(ChangeLevel.REVISION)
+
+    @property
+    def additions(self) -> list[SchemaChange]:
+        """Get the model-level changes."""
+        return self._filter_changes(ChangeLevel.ADDITION)
+
+    def _filter_changes(self, level: ChangeLevel) -> list[SchemaChange]:
+        """Filter changelog by level."""
+        return [change for change in self.changes if change.kind == level]
 
 
 @dataclass
@@ -86,17 +68,26 @@ class SchemaContext:
 
     field_name: str = "root"
     curr_depth: int = 0
-    is_required: bool = False
-    was_required: bool = False
-    additional_props: bool = True
+    required_before: bool = True
+    required_now: bool = True
 
 
-@dataclass
 class PropsByStatus:
     """Set of props grouped by required status."""
 
-    required: set[str]
-    optional: set[str]
+    def __init__(self, props: set[str], required: set[str]) -> None:
+        """Initialize the PropsByStatus class."""
+        self.required = props & required  # in both props and required sets
+        self.optional = props - required  # in props but not in required
+
+
+class AttributesByType:
+    """Set of attributes grouped by type, e.g. validation, metadata."""
+
+    def __init__(self, attrs: set[str]) -> None:
+        """Initialize the AttributeByTypes class."""
+        self.validation = attrs & VALIDATION_FIELDS
+        self.metadata = attrs & METADATA_FIELDS
 
 
 @dataclass
@@ -109,78 +100,189 @@ class ObjectDiff:
 
 
 @dataclass
-class MetadataDiff:
-    """List the differences in key metadata attributes between schemas."""
+class AttributeDiff:
+    """List the attributes that were added, removed, or changed."""
 
-    prop_type: bool | None = None
-    required_status: bool | None = None
-    additional_props: bool | None = None
-    other_metadata: set[str] | None = None
+    added: AttributesByType
+    removed: AttributesByType
+    changed: AttributesByType
 
 
 def compare_schemas(
     new_schema: dict,
-    old_schema: dict,
+    previous_schema: dict,
     old_version: str,
 ) -> Release:
     """Compare two schemas and create a release with the correct SchemaVer and Changelog."""
-    changelog = ChangeLog(
-        model=[],
-        revision=[],
-        addition=[],
-    )
+    changelog = Changelog(changes=[])
     root_context = SchemaContext()
-    diff = DeepDiff(old_schema, new_schema)
-    pprint(diff)  # noqa: T203
-    changelog = parse_schema_recursively(
+    changelog = parse_changes_recursively(
         new_schema=new_schema,
-        old_schema=old_schema,
+        previous_schema=previous_schema,
         context=root_context,
         changelog=changelog,
     )
+    if changelog.model_changes:
+        release_kind = ChangeLevel.MODEL
+    elif changelog.revisions:
+        release_kind = ChangeLevel.REVISION
+    else:
+        release_kind = ChangeLevel.ADDITION
+
     return Release(
         new_version="2-0-0",
         old_version=old_version,
-        change_level=ChangeType.MODEL,
+        kind=release_kind,
         changes=changelog,
     )
 
 
-def parse_schema_recursively(
+def record_prop_change(  # noqa: PLR0913
+    prop: str,
+    location: str,
+    lookup: dict,
+    diff: DiffType,
+    required: Required,
+    extra_props: ExtraProps,
+) -> SchemaChange:
+    """Categorize and record a change made to an object's property."""
+    message = (
+        f"{required.value.title()} property '{prop}' was {diff.value} "
+        f"with additional properties {extra_props.value}"
+    )
+    return SchemaChange(
+        kind=lookup[diff][required][extra_props],
+        description=message,
+        location=location,
+    )
+
+
+def parse_changes_recursively(
     new_schema: dict,
-    old_schema: dict,
+    previous_schema: dict,
     context: SchemaContext,
-    changelog: ChangeLog,
-) -> ChangeLog:
-    """Parse the schema."""
-    new_type = new_schema.get("type")
-    old_type = old_schema.get("type")
-    if (not new_type) or (not old_type):
-        raise ValueError
-    if new_type != old_type:
-        msg = f"Type was changed from {old_type} to {new_type}"
-        change = SchemaChange(
-            kind=ChangeType.MODEL,
-            description=msg,
-            location=context.field_name,
+    changelog: Changelog,
+) -> Changelog:
+    """Recursively work through each element of the schema and parse changes."""
+    # create local variables to simplify accessing validation fields
+    props_attr = ValidationField.PROPS.value
+    required_attr = ValidationField.REQUIRED.value
+    extra_props = ValidationField.EXTRA_PROPS.value
+    # diff the schema attributes
+    attr_diff = diff_schema_attributes(new_schema, previous_schema)
+    props_changed = (
+        props_attr in attr_diff.added.validation
+        or props_attr in attr_diff.removed.validation
+        or props_attr in attr_diff.changed.validation
+    )
+    required_changed = (
+        required_attr in attr_diff.added.validation
+        or required_attr in attr_diff.removed.validation
+        or required_attr in attr_diff.changed.validation
+    )
+    # diff the properties
+    if props_changed or required_changed:
+        # extra
+        required_now = new_schema.get(required_attr, set())
+        required_before = previous_schema.get(required_attr, set())
+        object_diff = diff_object_properties(
+            new_object=new_schema.get(props_attr, {}),
+            old_object=previous_schema.get(props_attr, {}),
+            new_required=set(required_now),
+            old_required=set(required_before),
         )
-        changelog.model.append(change)
-        return changelog
+        # fmt: off
+        extra_props_now = (
+            ExtraProps.ALLOWED
+            if new_schema.get(extra_props, True)
+            else ExtraProps.NOT_ALLOWED
+        )
+        extra_props_before = (
+            ExtraProps.ALLOWED
+            if previous_schema.get(extra_props, True)
+            else ExtraProps.NOT_ALLOWED
+        )
+        # fmt: on
+        # record changes for added props
+        for prop in object_diff.added.required:
+            change = record_prop_change(
+                prop=prop,
+                location=context.field_name,
+                lookup=PROP_LOOKUP,
+                diff=DiffType.ADDED,
+                required=Required.YES,
+                extra_props=extra_props_before,
+            )
+            changelog.changes.append(change)
+        for prop in object_diff.added.optional:
+            change = record_prop_change(
+                prop=prop,
+                location=context.field_name,
+                lookup=PROP_LOOKUP,
+                diff=DiffType.ADDED,
+                required=Required.NO,
+                extra_props=extra_props_before,
+            )
+            changelog.changes.append(change)
+        # record changes for removed props
+        for prop in object_diff.removed.optional:
+            change = record_prop_change(
+                prop=prop,
+                location=context.field_name,
+                lookup=PROP_LOOKUP,
+                diff=DiffType.REMOVED,
+                required=Required.NO,
+                extra_props=extra_props_now,
+            )
+            changelog.changes.append(change)
+        for prop in object_diff.removed.required:
+            change = record_prop_change(
+                prop=prop,
+                location=context.field_name,
+                lookup=PROP_LOOKUP,
+                diff=DiffType.REMOVED,
+                required=Required.YES,
+                extra_props=extra_props_now,
+            )
+            changelog.changes.append(change)
+        # recursively parse changes for props that have changed
+        for prop in object_diff.changed:
+            context = SchemaContext(
+                curr_depth=context.curr_depth + 1,
+                field_name=context.field_name + f"['properties']['{prop}']",
+                required_now=prop in required_now,
+                required_before=prop in required_before,
+            )
+            return parse_changes_recursively(
+                new_schema=new_schema["properties"][prop],
+                previous_schema=previous_schema["properties"][prop],
+                context=context,
+                changelog=changelog,
+            )
     return changelog
 
 
-def diff_property_metadata(
-    new_prop: dict,
-    old_prop: dict,
-) -> MetadataDiff:
-    """Determine which metadata elements were changed between versions."""
-    diff = MetadataDiff()
-    # check if types have changed
-    new_type = new_prop.pop("type", None)
-    old_type = old_prop.pop("type", None)
-    diff.prop_type = new_type == old_type
-    # check if required status has changed
-    return diff
+def diff_schema_attributes(
+    new_schema: dict,
+    old_schema: dict,
+) -> AttributeDiff:
+    """Determine which attributes were added, removed, or changed between versions."""
+    # Use set math to get attrs that were added or removed
+    new_attrs = set(new_schema)
+    old_attrs = set(old_schema)
+    attrs_added = AttributesByType(new_attrs - old_attrs)
+    attrs_removed = AttributesByType(old_attrs - new_attrs)
+    # get the attributes that were modified
+    changed = set()
+    for attr in new_attrs & old_attrs:
+        if new_schema[attr] != old_schema[attr]:
+            changed.add(attr)
+    attrs_changed = AttributesByType(changed)
+    return AttributeDiff(
+        added=attrs_added,
+        removed=attrs_removed,
+        changed=attrs_changed,
+    )
 
 
 def diff_object_properties(
@@ -193,19 +295,17 @@ def diff_object_properties(
     # get the props that were added or removed between versions
     new_props = set(new_object)
     old_props = set(old_object)
-    added = new_props - old_props
-    removed = old_props - new_props
     added_props = PropsByStatus(
-        required=(new_required | added),  # union
-        optional=(added - new_required),  # difference
+        props=(new_props - old_props),
+        required=set(new_required),
     )
     removed_props = PropsByStatus(
-        required=(old_required | removed),  # union
-        optional=(removed - old_required),  # difference
+        props=(old_props - new_props),
+        required=set(old_required),
     )
-    # get the props that were shared by both schemas but changed in some way
+    # get the props present in both objects but changed in some way
     changed_props = set()
-    for prop in new_props.union(old_props):
+    for prop in new_props & old_props:
         if new_object[prop] != old_object[prop]:
             changed_props.add(prop)
             continue
