@@ -2,8 +2,19 @@
 
 from copy import deepcopy
 
-from schemaver.compare_schemas import ChangeLevel, Release, compare_schemas
+import pytest
 
+from schemaver.compare_schemas import ChangeLevel, Release, compare_schemas
+from schemaver.lookup import ValidationField
+
+# default props
+PROP_INT = "productId"
+PROP_STRING = "productName"
+PROP_ENUM = "productType"
+PROP_ARRAY = "tags"
+PROP_OBJECT = "nestedObject"
+PROP_ANY = "anyField"
+# base version and schema
 BASE_VERSION = "1-0-0"
 BASE_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -12,11 +23,14 @@ BASE_SCHEMA = {
     "description": "A product in the catalog",
     "type": "object",
     "properties": {
-        "productId": {"type": "string"},
-        "productName": {"type": "string"},
-        "productType": {"type": "string", "enum": ["foo", "bar"]},
+        PROP_INT: {"type": "integer"},
+        PROP_STRING: {"type": "string"},
+        PROP_ENUM: {"type": "string", "enum": ["foo", "bar"]},
+        PROP_ARRAY: {"type": "array"},
+        PROP_OBJECT: {"type": "object"},
+        PROP_ANY: {},
     },
-    "required": ["productId", "productName"],
+    "required": [PROP_INT, PROP_STRING],
     "additionalProperties": False,
 }
 
@@ -246,7 +260,7 @@ class TestRemovingProp:
         # arrange
         old = BASE_SCHEMA
         new = deepcopy(old)
-        del new["properties"]["productType"]
+        del new["properties"][PROP_ENUM]
         # act
         release = compare_schemas(
             new_schema=new,
@@ -269,7 +283,7 @@ class TestRemovingProp:
         # arrange
         old = deepcopy(BASE_SCHEMA)
         new = deepcopy(old)
-        del new["properties"]["productType"]
+        del new["properties"][PROP_ENUM]
         del new["additionalProperties"]
         # act
         release = compare_schemas(
@@ -293,7 +307,7 @@ class TestRemovingProp:
         # arrange
         old = deepcopy(BASE_SCHEMA)
         new = deepcopy(old)
-        del new["properties"]["productType"]
+        del new["properties"][PROP_ENUM]
         new["additionalProperties"] = True
         # act
         release = compare_schemas(
@@ -317,7 +331,7 @@ class TestRemovingProp:
         # arrange
         old = deepcopy(BASE_SCHEMA)
         new = deepcopy(old)
-        del new["properties"]["productName"]
+        del new["properties"][PROP_STRING]
         # act
         release = compare_schemas(
             new_schema=new,
@@ -340,7 +354,7 @@ class TestRemovingProp:
         # arrange
         old = deepcopy(BASE_SCHEMA)
         new = deepcopy(old)
-        del new["properties"]["productName"]
+        del new["properties"][PROP_STRING]
         del new["additionalProperties"]
         # act
         release = compare_schemas(
@@ -364,7 +378,7 @@ class TestRemovingProp:
         # arrange
         old = deepcopy(BASE_SCHEMA)
         new = deepcopy(old)
-        del new["properties"]["productName"]
+        del new["properties"][PROP_STRING]
         new["additionalProperties"] = True
         # act
         release = compare_schemas(
@@ -408,8 +422,8 @@ class TestRemovingProp:
         old = deepcopy(BASE_SCHEMA)
         # arrange - remove nested property
         new = deepcopy(old)
-        del new["properties"]["productType"]
-        del new["properties"]["productName"]
+        del new["properties"][PROP_ENUM]
+        del new["properties"][PROP_STRING]
         # act
         release = compare_schemas(
             new_schema=new,
@@ -420,4 +434,92 @@ class TestRemovingProp:
         changes = [change.attribute for change in release.changelog.changes]
         assert len(changes) == 2
         assert "productName" in changes
-        assert "productType" in changes
+        assert PROP_ENUM in changes
+
+
+class TestChangingValidation:
+    """Test adding, removing, and modifying validations."""
+
+    VALIDATION_EXAMPLES = (
+        (PROP_ANY, ValidationField.TYPE.value, "string"),
+        (PROP_ANY, ValidationField.ENUM.value, ["foo", "bar"]),
+        (PROP_ANY, ValidationField.FORMAT.value, "email"),
+        # array types
+        (PROP_ARRAY, ValidationField.ITEMS.value, {"type": "string"}),
+        (PROP_ARRAY, ValidationField.MAX_ITEMS.value, 10),
+        (PROP_ARRAY, ValidationField.MIN_ITEMS.value, 10),
+        (PROP_ARRAY, ValidationField.CONTAINS.value, {"type": "string"}),
+        (PROP_ARRAY, ValidationField.UNIQUE_ITEMS.value, True),
+        (PROP_ARRAY, ValidationField.MAX_CONTAINS.value, 10),
+        (PROP_ARRAY, ValidationField.MIN_CONTAINS.value, 10),
+        # object types
+        (PROP_OBJECT, ValidationField.PROPS.value, {"type": "string"}),
+        (PROP_OBJECT, ValidationField.MAX_PROPS.value, 10),
+        (PROP_OBJECT, ValidationField.MIN_PROPS.value, 10),
+        (PROP_OBJECT, ValidationField.EXTRA_PROPS.value, False),
+        (PROP_OBJECT, ValidationField.DEPENDENT_REQUIRED.value, True),
+        (PROP_OBJECT, ValidationField.REQUIRED.value, ["foo"]),
+        # numeric types
+        (PROP_INT, ValidationField.MULTIPLE_OF.value, 10),
+        (PROP_INT, ValidationField.MAX.value, 10),
+        (PROP_INT, ValidationField.EXCLUSIVE_MAX.value, 10),
+        (PROP_INT, ValidationField.MIN.value, 10),
+        (PROP_INT, ValidationField.EXCLUSIVE_MIN.value, 10),
+        # string types
+        (PROP_STRING, ValidationField.MAX_LENGTH.value, 10),
+        (PROP_STRING, ValidationField.MIN_LENGTH.value, 10),
+        (PROP_STRING, ValidationField.PATTERN.value, "[A-z]+"),
+    )
+
+    @pytest.mark.parametrize(("prop", "attr", "value"), VALIDATION_EXAMPLES)
+    def test_adding_new_validations_should_result_in_a_revision(
+        self,
+        prop: str,
+        attr: str,
+        value: dict | list | str | int,
+    ):
+        """
+        Should result in a REVISION.
+
+        Adding new validation should result in a revision because some previously
+        valid JSON inputs will no longer be valid against the new schema.
+        """
+        # arrange - add the validation attribute to the new schema
+        old = deepcopy(BASE_SCHEMA)
+        new = deepcopy(old)
+        new["properties"][prop][attr] = value
+        # act
+        release = compare_schemas(
+            new_schema=new,
+            previous_schema=old,
+            old_version=BASE_VERSION,
+        )
+        # assert
+        assert_release_kind(got=release, wanted=ChangeLevel.REVISION)
+
+    @pytest.mark.parametrize(("prop", "attr", "value"), VALIDATION_EXAMPLES)
+    def test_removing_existing_validations_should_result_in_an_addition(
+        self,
+        prop: str,
+        attr: str,
+        value: dict | list | str | int,
+    ):
+        """
+        Should result in an ADDITION.
+
+        Removing previous validations should result in an addition because all
+        previously valid inputs will remain valid and some inputs that weren't
+        previously valid will now be valid against the new schema.
+        """
+        # arrange - add the validation attribute to the old schema
+        new = deepcopy(BASE_SCHEMA)
+        old = deepcopy(new)
+        old["properties"][prop][attr] = value
+        # act
+        release = compare_schemas(
+            new_schema=new,
+            previous_schema=old,
+            old_version=BASE_VERSION,
+        )
+        # assert
+        assert_release_kind(got=release, wanted=ChangeLevel.ADDITION)

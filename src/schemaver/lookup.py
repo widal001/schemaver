@@ -74,17 +74,17 @@ class ValidationField(Enum):
     MIN_CONTAINS = "minContains"
     # object types
     PROPS = "properties"
-    MAX_PROPERTIES = "maxProperties"
-    MIN_PROPERTIES = "minProperties"
+    MAX_PROPS = "maxProperties"
+    MIN_PROPS = "minProperties"
     EXTRA_PROPS = "additionalProperties"
     DEPENDENT_REQUIRED = "dependentRequired"
     REQUIRED = "required"
     # numeric types
     MULTIPLE_OF = "multipleOf"
-    MAXIMUM = "maximum"
-    EXCLUSIVE_MAXIMUM = "exclusiveMaximum"
-    MINIMUM = "minimum"
-    EXCLUSIVE_MINIMUM = "exclusiveMinimum"
+    MAX = "maximum"
+    EXCLUSIVE_MAX = "exclusiveMaximum"
+    MIN = "minimum"
+    EXCLUSIVE_MIN = "exclusiveMinimum"
     # string types
     MAX_LENGTH = "maxLength"
     MIN_LENGTH = "minLength"

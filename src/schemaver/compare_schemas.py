@@ -71,6 +71,8 @@ class SchemaContext:
     curr_depth: int = 0
     required_before: bool = True
     required_now: bool = True
+    extra_props_before: ExtraProps = ExtraProps.NOT_ALLOWED
+    extra_props_now: ExtraProps = ExtraProps.NOT_ALLOWED
 
 
 class PropsByStatus:
@@ -138,26 +140,92 @@ def compare_schemas(
     )
 
 
-def record_prop_change(  # noqa: PLR0913
-    prop: str,
+def populate_changelog_from_object_diff(
+    diff: ObjectDiff,
+    changelog: Changelog,
     context: SchemaContext,
-    lookup: dict,
-    diff: DiffType,
-    required: Required,
-    extra_props: ExtraProps,
-) -> SchemaChange:
-    """Categorize and record a change made to an object's property."""
-    message = (
-        f"{required.value.title()} property '{prop}' was {diff.value} "
-        f"with additional properties {extra_props.value}"
-    )
-    return SchemaChange(
-        kind=lookup[diff][required][extra_props],
-        depth=context.curr_depth,
-        description=message,
-        attribute=prop,
-        location=context.field_name + f"['properties']['{prop}']",
-    )
+) -> Changelog:
+    """Use the ObjectDiff to record changes and add them to the changelog."""
+
+    def record_change(
+        prop: str,
+        diff: DiffType,
+        required: Required,
+    ) -> None:
+        """Categorize and record a change made to an object's property."""
+        # set the value for extra props
+        if diff == DiffType.ADDED:
+            extra_props = context.extra_props_before
+        else:
+            extra_props = context.extra_props_now
+        # set the message
+        message = (
+            f"{required.value.title()} property '{prop}' was {diff.value} "
+            f"with additional properties {extra_props.value}"
+        )
+        change = SchemaChange(
+            kind=PROP_LOOKUP[diff][required][extra_props],
+            depth=context.curr_depth,
+            description=message,
+            attribute=prop,
+            location=context.field_name + f"['properties']['{prop}']",
+        )
+        changelog.changes.append(change)
+
+    # record changes for REQUIRED props that were ADDED
+    for prop in diff.added.required:
+        record_change(prop=prop, diff=DiffType.ADDED, required=Required.YES)
+    # record changes for OPTIONAL props that were ADDED
+    for prop in diff.added.optional:
+        record_change(prop=prop, diff=DiffType.ADDED, required=Required.NO)
+    # record changes for REQUIRED props that were REMOVED
+    for prop in diff.removed.required:
+        record_change(prop=prop, diff=DiffType.REMOVED, required=Required.YES)
+    # record changes for OPTIONAL props that were REMOVED
+    for prop in diff.removed.optional:
+        record_change(prop=prop, diff=DiffType.REMOVED, required=Required.NO)
+    return changelog
+
+
+def populate_changelog_from_attr_diff(
+    diff: AttributeDiff,
+    context: SchemaContext,
+    changelog: Changelog,
+) -> Changelog:
+    """Use the AttributeDiff to record changes and add them to the changelog."""
+
+    def record_change(
+        kind: ChangeLevel,
+        attr: str,
+        message: str,
+    ) -> None:
+        """Categorize and record a change made to a property's attribute."""
+        change = SchemaChange(
+            kind=kind,
+            description=message,
+            attribute=attr,
+            location=context.field_name + f"['{attr}']",
+            depth=context.curr_depth,
+        )
+        changelog.changes.append(change)
+
+    # record changes for METADATA attributes that were ADDED
+    for attr in diff.added.metadata:
+        msg = f"Metadata attribute '{attr}' was added."
+        record_change(attr=attr, message=msg, kind=ChangeLevel.ADDITION)
+    # record changes for METADATA attributes that were REMOVED
+    for attr in diff.removed.metadata:
+        msg = f"Metadata attribute '{attr}' was removed."
+        record_change(attr=attr, message=msg, kind=ChangeLevel.ADDITION)
+    # record changes for VALIDATION attributes that were ADDED
+    for attr in diff.added.validation:
+        msg = f"Validation attribute '{attr}' was added."
+        record_change(attr=attr, message=msg, kind=ChangeLevel.REVISION)
+    # record changes for VALIDATION attributes that were REMOVED
+    for attr in diff.removed.validation:
+        msg = f"Validation attribute '{attr}' was removed."
+        record_change(attr=attr, message=msg, kind=ChangeLevel.ADDITION)
+    return changelog
 
 
 def parse_changes_recursively(
@@ -171,8 +239,15 @@ def parse_changes_recursively(
     props_attr = ValidationField.PROPS.value
     required_attr = ValidationField.REQUIRED.value
     extra_props = ValidationField.EXTRA_PROPS.value
-    # diff the schema attributes
+    # get the attributes that were added, removed, or modified
+    # populate the changelog with the differences
     attr_diff = diff_schema_attributes(new_schema, previous_schema)
+    changelog = populate_changelog_from_attr_diff(
+        diff=attr_diff,
+        context=context,
+        changelog=changelog,
+    )
+    # determine if the properties have changed
     props_changed = (
         props_attr in attr_diff.added.validation
         or props_attr in attr_diff.removed.validation
@@ -183,9 +258,9 @@ def parse_changes_recursively(
         or required_attr in attr_diff.removed.validation
         or required_attr in attr_diff.changed.validation
     )
-    # diff the properties
+    # diff the properties if they've changed
     if props_changed or required_changed:
-        # extra
+        # get props that were added, removed, or modified
         required_now = new_schema.get(required_attr, set())
         required_before = previous_schema.get(required_attr, set())
         object_diff = diff_object_properties(
@@ -195,59 +270,23 @@ def parse_changes_recursively(
             old_required=set(required_before),
         )
         # fmt: off
-        extra_props_now = (
+        # populate the changelog with the differences
+        context.extra_props_now = (
             ExtraProps.ALLOWED
             if new_schema.get(extra_props, True)
             else ExtraProps.NOT_ALLOWED
         )
-        extra_props_before = (
+        context.extra_props_before = (
             ExtraProps.ALLOWED
             if previous_schema.get(extra_props, True)
             else ExtraProps.NOT_ALLOWED
         )
+        changelog = populate_changelog_from_object_diff(
+            diff=object_diff,
+            context=context,
+            changelog=changelog,
+        )
         # fmt: on
-        # record changes for added props
-        for prop in object_diff.added.required:
-            change = record_prop_change(
-                prop=prop,
-                context=context,
-                lookup=PROP_LOOKUP,
-                diff=DiffType.ADDED,
-                required=Required.YES,
-                extra_props=extra_props_before,
-            )
-            changelog.changes.append(change)
-        for prop in object_diff.added.optional:
-            change = record_prop_change(
-                prop=prop,
-                context=context,
-                lookup=PROP_LOOKUP,
-                diff=DiffType.ADDED,
-                required=Required.NO,
-                extra_props=extra_props_before,
-            )
-            changelog.changes.append(change)
-        # record changes for removed props
-        for prop in object_diff.removed.optional:
-            change = record_prop_change(
-                prop=prop,
-                context=context,
-                lookup=PROP_LOOKUP,
-                diff=DiffType.REMOVED,
-                required=Required.NO,
-                extra_props=extra_props_now,
-            )
-            changelog.changes.append(change)
-        for prop in object_diff.removed.required:
-            change = record_prop_change(
-                prop=prop,
-                context=context,
-                lookup=PROP_LOOKUP,
-                diff=DiffType.REMOVED,
-                required=Required.YES,
-                extra_props=extra_props_now,
-            )
-            changelog.changes.append(change)
         # recursively parse changes for props that have changed
         for prop in object_diff.changed:
             context = SchemaContext(
