@@ -32,6 +32,7 @@ class SchemaChange:
 
     kind: ChangeLevel
     description: str
+    attribute: str
     depth: int = 0
     location: str = "root"
 
@@ -154,7 +155,8 @@ def record_prop_change(  # noqa: PLR0913
         kind=lookup[diff][required][extra_props],
         depth=context.curr_depth,
         description=message,
-        location=context.field_name + f"['properties']['{prop}]",
+        attribute=prop,
+        location=context.field_name + f"['properties']['{prop}']",
     )
 
 

@@ -209,6 +209,26 @@ class TestAddingProp:
         assert parent_prop in change.location
         assert change.depth == 1
 
+    def test_adding_multiple_props_results_in_multiple_changes(self):
+        """The changelog should contain a change for every prop added."""
+        # arrange - add a nested object
+        old = deepcopy(BASE_SCHEMA)
+        # arrange - remove nested property
+        new = deepcopy(old)
+        new["properties"]["cost"] = {"type": "number"}
+        new["properties"]["quantity"] = {"type": "integer"}
+        # act
+        release = compare_schemas(
+            new_schema=new,
+            previous_schema=old,
+            old_version=BASE_VERSION,
+        )
+        # assert
+        changes = [change.attribute for change in release.changelog.changes]
+        assert len(changes) == 2
+        assert "cost" in changes
+        assert "quantity" in changes
+
 
 class TestRemovingProp:
     """Test result when removing a prop from the old schema."""
@@ -381,3 +401,23 @@ class TestRemovingProp:
         assert nested_prop in change.location
         assert parent_prop in change.location
         assert change.depth == 1
+
+    def test_removing_multiple_props_results_in_multiple_changes(self):
+        """The changelog should contain a change for every prop removed."""
+        # arrange - add a nested object
+        old = deepcopy(BASE_SCHEMA)
+        # arrange - remove nested property
+        new = deepcopy(old)
+        del new["properties"]["productType"]
+        del new["properties"]["productName"]
+        # act
+        release = compare_schemas(
+            new_schema=new,
+            previous_schema=old,
+            old_version=BASE_VERSION,
+        )
+        # assert
+        changes = [change.attribute for change in release.changelog.changes]
+        assert len(changes) == 2
+        assert "productName" in changes
+        assert "productType" in changes
