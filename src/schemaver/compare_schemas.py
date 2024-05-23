@@ -217,6 +217,10 @@ def populate_changelog_from_attr_diff(
     for attr in diff.removed.metadata:
         msg = f"Metadata attribute '{attr}' was removed."
         record_change(attr=attr, message=msg, kind=ChangeLevel.ADDITION)
+    # record changes for METADATA attributes that were MODIFIED
+    for attr in diff.changed.metadata:
+        msg = f"Metadata attribute '{attr}' was modified."
+        record_change(attr=attr, message=msg, kind=ChangeLevel.ADDITION)
     # record changes for VALIDATION attributes that were ADDED
     for attr in diff.added.validation:
         msg = f"Validation attribute '{attr}' was added."
