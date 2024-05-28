@@ -71,7 +71,7 @@ class TestAddingProp:
         # act
         release = Release(
             new_schema=new,
-            previous_schema=old,
+            old_schema=old,
             old_version=BASE_VERSION,
         )
         # assert
@@ -95,7 +95,7 @@ class TestAddingProp:
         # act
         release = Release(
             new_schema=new,
-            previous_schema=old,
+            old_schema=old,
             old_version=BASE_VERSION,
         )
         # assert
@@ -119,7 +119,7 @@ class TestAddingProp:
         # act
         release = Release(
             new_schema=new,
-            previous_schema=old,
+            old_schema=old,
             old_version=BASE_VERSION,
         )
         # assert
@@ -143,7 +143,7 @@ class TestAddingProp:
         # act
         release = Release(
             new_schema=new,
-            previous_schema=old,
+            old_schema=old,
             old_version=BASE_VERSION,
         )
         # assert
@@ -168,7 +168,7 @@ class TestAddingProp:
         # act
         release = Release(
             new_schema=new,
-            previous_schema=old,
+            old_schema=old,
             old_version=BASE_VERSION,
         )
         # assert
@@ -193,7 +193,7 @@ class TestAddingProp:
         # act
         release = Release(
             new_schema=new,
-            previous_schema=old,
+            old_schema=old,
             old_version=BASE_VERSION,
         )
         # assert
@@ -220,7 +220,7 @@ class TestAddingProp:
         # act
         release = Release(
             new_schema=new,
-            previous_schema=old,
+            old_schema=old,
             old_version=BASE_VERSION,
         )
         # assert
@@ -241,7 +241,7 @@ class TestAddingProp:
         # act
         release = Release(
             new_schema=new,
-            previous_schema=old,
+            old_schema=old,
             old_version=BASE_VERSION,
         )
         # assert
@@ -271,7 +271,7 @@ class TestRemovingProp:
         # act
         release = Release(
             new_schema=new,
-            previous_schema=old,
+            old_schema=old,
             old_version=BASE_VERSION,
         )
         # assert - confirm the release has the right version
@@ -295,7 +295,7 @@ class TestRemovingProp:
         # act
         release = Release(
             new_schema=new,
-            previous_schema=old,
+            old_schema=old,
             old_version=BASE_VERSION,
         )
         # assert
@@ -319,7 +319,7 @@ class TestRemovingProp:
         # act
         release = Release(
             new_schema=new,
-            previous_schema=old,
+            old_schema=old,
             old_version=BASE_VERSION,
         )
         # assert
@@ -342,7 +342,7 @@ class TestRemovingProp:
         # act
         release = Release(
             new_schema=new,
-            previous_schema=old,
+            old_schema=old,
             old_version=BASE_VERSION,
         )
         # assert
@@ -366,7 +366,7 @@ class TestRemovingProp:
         # act
         release = Release(
             new_schema=new,
-            previous_schema=old,
+            old_schema=old,
             old_version=BASE_VERSION,
         )
         # assert
@@ -390,7 +390,7 @@ class TestRemovingProp:
         # act
         release = Release(
             new_schema=new,
-            previous_schema=old,
+            old_schema=old,
             old_version=BASE_VERSION,
         )
         # assert
@@ -413,7 +413,7 @@ class TestRemovingProp:
         # act
         release = Release(
             new_schema=new,
-            previous_schema=old,
+            old_schema=old,
             old_version=BASE_VERSION,
         )
         # assert
@@ -434,7 +434,7 @@ class TestRemovingProp:
         # act
         release = Release(
             new_schema=new,
-            previous_schema=old,
+            old_schema=old,
             old_version=BASE_VERSION,
         )
         # assert
@@ -498,7 +498,7 @@ class TestChangingValidation:
         # act
         release = Release(
             new_schema=new,
-            previous_schema=old,
+            old_schema=old,
             old_version=BASE_VERSION,
         )
         # assert
@@ -525,7 +525,7 @@ class TestChangingValidation:
         # act
         release = Release(
             new_schema=new,
-            previous_schema=old,
+            old_schema=old,
             old_version=BASE_VERSION,
         )
         # assert
@@ -565,7 +565,7 @@ class TestChangingMetadata:
         # act
         release = Release(
             new_schema=new,
-            previous_schema=old,
+            old_schema=old,
             old_version=BASE_VERSION,
         )
         # assert
@@ -591,7 +591,7 @@ class TestChangingMetadata:
         # act
         release = Release(
             new_schema=new,
-            previous_schema=old,
+            old_schema=old,
             old_version=BASE_VERSION,
         )
         # assert
@@ -631,7 +631,7 @@ class TestChangingMetadata:
         # act
         release = Release(
             new_schema=new,
-            previous_schema=old,
+            old_schema=old,
             old_version=BASE_VERSION,
         )
         # assert
