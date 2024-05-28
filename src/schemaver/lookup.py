@@ -1,5 +1,6 @@
 """Lookup the results of a change based on standard inputs."""
 
+from dataclasses import dataclass
 from enum import Enum
 
 # ##################################
@@ -93,6 +94,19 @@ class ValidationField(Enum):
 
 METADATA_FIELDS = {option.value for option in MetadataField}
 VALIDATION_FIELDS = {option.value for option in ValidationField}
+
+
+@dataclass
+class SchemaContext:
+    """Context about the current schema."""
+
+    field_name: str = "root"
+    curr_depth: int = 0
+    required_before: bool = True
+    required_now: bool = True
+    extra_props_before: ExtraProps = ExtraProps.NOT_ALLOWED
+    extra_props_now: ExtraProps = ExtraProps.NOT_ALLOWED
+
 
 # ##################################
 # Lookup tables

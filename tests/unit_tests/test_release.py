@@ -1,10 +1,10 @@
-"""Test the code in the compare_schemas module."""
+"""Test the code in the Release module."""
 
 from copy import deepcopy
 
 import pytest
 
-from schemaver.compare_schemas import ChangeLevel, Release, compare_schemas
+from schemaver.release import ChangeLevel, Release
 from schemaver.lookup import MetadataField, ValidationField
 
 # default props
@@ -15,7 +15,7 @@ PROP_ARRAY = "tags"
 PROP_OBJECT = "nestedObject"
 PROP_ANY = "anyField"
 # base version and schema
-BASE_VERSION = "1-0-0"
+BASE_VERSION = "1-1-1"
 BASE_SCHEMA = {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://example.com/product.schema.json",
@@ -33,15 +33,22 @@ BASE_SCHEMA = {
     "required": [PROP_INT, PROP_STRING],
     "additionalProperties": False,
 }
+VERSION_LOOKUP = {
+    ChangeLevel.MODEL: "v2-0-0",
+    ChangeLevel.REVISION: "v1-2-0",
+    ChangeLevel.ADDITION: "v1-1-2",
+    ChangeLevel.NONE: "v1-1-1",
+}
 
 
 def assert_release_kind(got: Release, wanted: ChangeLevel):
     """Confirm the release matches expectations."""
     assert got.kind == wanted
-    assert len(getattr(got.changelog, wanted.value)) > 0
+    assert str(got.new_version) == VERSION_LOOKUP[wanted]
+    assert len(got.changelog.filter_changes(wanted)) > 0
     for level in ChangeLevel:
         if level not in (wanted, ChangeLevel.NONE):
-            assert not getattr(got.changelog, level.value)
+            assert not got.changelog.filter_changes(level)
 
 
 class TestAddingProp:
@@ -62,7 +69,7 @@ class TestAddingProp:
         new = deepcopy(old)
         new["properties"]["cost"] = {"type": "number"}
         # act
-        release = compare_schemas(
+        release = Release(
             new_schema=new,
             previous_schema=old,
             old_version=BASE_VERSION,
@@ -86,7 +93,7 @@ class TestAddingProp:
         new = deepcopy(old)
         new["properties"]["cost"] = {"type": "number"}
         # act
-        release = compare_schemas(
+        release = Release(
             new_schema=new,
             previous_schema=old,
             old_version=BASE_VERSION,
@@ -110,7 +117,7 @@ class TestAddingProp:
         new = deepcopy(old)
         new["properties"]["cost"] = {"type": "number"}
         # act
-        release = compare_schemas(
+        release = Release(
             new_schema=new,
             previous_schema=old,
             old_version=BASE_VERSION,
@@ -134,7 +141,7 @@ class TestAddingProp:
         new["properties"]["cost"] = {"type": "number"}
         new["required"].append("cost")
         # act
-        release = compare_schemas(
+        release = Release(
             new_schema=new,
             previous_schema=old,
             old_version=BASE_VERSION,
@@ -159,7 +166,7 @@ class TestAddingProp:
         new["properties"]["cost"] = {"type": "number"}
         new["required"].append("cost")
         # act
-        release = compare_schemas(
+        release = Release(
             new_schema=new,
             previous_schema=old,
             old_version=BASE_VERSION,
@@ -184,7 +191,7 @@ class TestAddingProp:
         new["properties"]["cost"] = {"type": "number"}
         new["required"].append("cost")
         # act
-        release = compare_schemas(
+        release = Release(
             new_schema=new,
             previous_schema=old,
             old_version=BASE_VERSION,
@@ -211,7 +218,7 @@ class TestAddingProp:
             "description": "A new optional string in a nested object.",
         }
         # act
-        release = compare_schemas(
+        release = Release(
             new_schema=new,
             previous_schema=old,
             old_version=BASE_VERSION,
@@ -232,7 +239,7 @@ class TestAddingProp:
         new["properties"]["cost"] = {"type": "number"}
         new["properties"]["quantity"] = {"type": "integer"}
         # act
-        release = compare_schemas(
+        release = Release(
             new_schema=new,
             previous_schema=old,
             old_version=BASE_VERSION,
@@ -262,7 +269,7 @@ class TestRemovingProp:
         new = deepcopy(old)
         del new["properties"][PROP_ENUM]
         # act
-        release = compare_schemas(
+        release = Release(
             new_schema=new,
             previous_schema=old,
             old_version=BASE_VERSION,
@@ -286,7 +293,7 @@ class TestRemovingProp:
         del new["properties"][PROP_ENUM]
         del new["additionalProperties"]
         # act
-        release = compare_schemas(
+        release = Release(
             new_schema=new,
             previous_schema=old,
             old_version=BASE_VERSION,
@@ -310,7 +317,7 @@ class TestRemovingProp:
         del new["properties"][PROP_ENUM]
         new["additionalProperties"] = True
         # act
-        release = compare_schemas(
+        release = Release(
             new_schema=new,
             previous_schema=old,
             old_version=BASE_VERSION,
@@ -333,7 +340,7 @@ class TestRemovingProp:
         new = deepcopy(old)
         del new["properties"][PROP_STRING]
         # act
-        release = compare_schemas(
+        release = Release(
             new_schema=new,
             previous_schema=old,
             old_version=BASE_VERSION,
@@ -357,7 +364,7 @@ class TestRemovingProp:
         del new["properties"][PROP_STRING]
         del new["additionalProperties"]
         # act
-        release = compare_schemas(
+        release = Release(
             new_schema=new,
             previous_schema=old,
             old_version=BASE_VERSION,
@@ -381,7 +388,7 @@ class TestRemovingProp:
         del new["properties"][PROP_STRING]
         new["additionalProperties"] = True
         # act
-        release = compare_schemas(
+        release = Release(
             new_schema=new,
             previous_schema=old,
             old_version=BASE_VERSION,
@@ -404,7 +411,7 @@ class TestRemovingProp:
         new = deepcopy(old)
         del new["properties"][parent_prop]["properties"][nested_prop]
         # act
-        release = compare_schemas(
+        release = Release(
             new_schema=new,
             previous_schema=old,
             old_version=BASE_VERSION,
@@ -425,7 +432,7 @@ class TestRemovingProp:
         del new["properties"][PROP_ENUM]
         del new["properties"][PROP_STRING]
         # act
-        release = compare_schemas(
+        release = Release(
             new_schema=new,
             previous_schema=old,
             old_version=BASE_VERSION,
@@ -489,7 +496,7 @@ class TestChangingValidation:
         new = deepcopy(old)
         new["properties"][prop][attr] = value
         # act
-        release = compare_schemas(
+        release = Release(
             new_schema=new,
             previous_schema=old,
             old_version=BASE_VERSION,
@@ -516,7 +523,7 @@ class TestChangingValidation:
         old = deepcopy(new)
         old["properties"][prop][attr] = value
         # act
-        release = compare_schemas(
+        release = Release(
             new_schema=new,
             previous_schema=old,
             old_version=BASE_VERSION,
@@ -556,7 +563,7 @@ class TestChangingMetadata:
         new = deepcopy(old)
         new["properties"][prop][attr] = value
         # act
-        release = compare_schemas(
+        release = Release(
             new_schema=new,
             previous_schema=old,
             old_version=BASE_VERSION,
@@ -582,7 +589,7 @@ class TestChangingMetadata:
         old = deepcopy(new)
         old["properties"][prop][attr] = value
         # act
-        release = compare_schemas(
+        release = Release(
             new_schema=new,
             previous_schema=old,
             old_version=BASE_VERSION,
@@ -622,7 +629,7 @@ class TestChangingMetadata:
         new = deepcopy(old)
         new["properties"][prop][attr] = new_value
         # act
-        release = compare_schemas(
+        release = Release(
             new_schema=new,
             previous_schema=old,
             old_version=BASE_VERSION,
