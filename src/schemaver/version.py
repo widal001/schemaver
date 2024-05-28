@@ -19,7 +19,7 @@ class Version:
         """Initialize a version number."""
         version_pattern = re.compile(
             r"""
-            v?                      # Optional leading v for version
+            v?                       # Optional leading v for version
             (?P<model>[0-9]+)-       # model number followed by a dash
             (?P<revision>[0-9]+)-    # revision number followed by a dash
             (?P<addition>[0-9]+)$    # addition number at the end of the string
@@ -28,7 +28,8 @@ class Version:
         )
         version_match = version_pattern.match(version.strip())
         if not version_match:
-            raise ValueError
+            message = "Version number must match the pattern v1-1-0 or 1-1-0"
+            raise ValueError(message)
         self.model = int(version_match.group("model"))
         self.revision = int(version_match.group("revision"))
         self.addition = int(version_match.group("addition"))
@@ -55,3 +56,9 @@ class Version:
     def __str__(self) -> str:
         """Return a string representation of the version."""
         return f"v{self.model}-{self.revision}-{self.addition}"
+
+    def __eq__(self, other: object) -> bool:
+        """Check the equality of two versions."""
+        if not isinstance(other, Version):
+            return False
+        return str(self) == str(other)

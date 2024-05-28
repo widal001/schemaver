@@ -41,9 +41,9 @@ VERSION_LOOKUP = {
 }
 
 
-def assert_release_kind(got: Release, wanted: ChangeLevel):
+def assert_release_level(got: Release, wanted: ChangeLevel):
     """Confirm the release matches expectations."""
-    assert got.kind == wanted
+    assert got.level == wanted
     assert str(got.new_version) == VERSION_LOOKUP[wanted]
     assert len(got.changes.filter(wanted)) > 0
     for level in ChangeLevel:
@@ -75,7 +75,7 @@ class TestAddingProp:
             old_version=BASE_VERSION,
         )
         # assert
-        assert_release_kind(got=release, wanted=ChangeLevel.ADDITION)
+        assert_release_level(got=release, wanted=ChangeLevel.ADDITION)
 
     def test_add_optional_prop_with_extra_props_allowed_implicitly(self):
         """
@@ -99,7 +99,7 @@ class TestAddingProp:
             old_version=BASE_VERSION,
         )
         # assert
-        assert_release_kind(got=release, wanted=ChangeLevel.REVISION)
+        assert_release_level(got=release, wanted=ChangeLevel.REVISION)
 
     def test_add_optional_prop_with_extra_props_allowed_explicitly(self):
         """
@@ -123,7 +123,7 @@ class TestAddingProp:
             old_version=BASE_VERSION,
         )
         # assert
-        assert_release_kind(got=release, wanted=ChangeLevel.REVISION)
+        assert_release_level(got=release, wanted=ChangeLevel.REVISION)
 
     def test_add_required_prop_with_extra_props_banned(self):
         """
@@ -147,7 +147,7 @@ class TestAddingProp:
             old_version=BASE_VERSION,
         )
         # assert
-        assert_release_kind(got=release, wanted=ChangeLevel.MODEL)
+        assert_release_level(got=release, wanted=ChangeLevel.MODEL)
 
     def test_add_required_prop_with_extra_props_allowed_implicitly(self):
         """
@@ -172,7 +172,7 @@ class TestAddingProp:
             old_version=BASE_VERSION,
         )
         # assert
-        assert_release_kind(got=release, wanted=ChangeLevel.REVISION)
+        assert_release_level(got=release, wanted=ChangeLevel.REVISION)
 
     def test_add_required_prop_with_extra_props_allowed_explicitly(self):
         """
@@ -197,7 +197,7 @@ class TestAddingProp:
             old_version=BASE_VERSION,
         )
         # assert
-        assert_release_kind(got=release, wanted=ChangeLevel.REVISION)
+        assert_release_level(got=release, wanted=ChangeLevel.REVISION)
 
     def test_add_prop_to_nested_object(self):
         """Nested props should be accessed through recursion."""
@@ -224,8 +224,8 @@ class TestAddingProp:
             old_version=BASE_VERSION,
         )
         # assert
-        assert_release_kind(got=release, wanted=ChangeLevel.ADDITION)
-        change = release.changes.changes[0]
+        assert_release_level(got=release, wanted=ChangeLevel.ADDITION)
+        change = release.changes[0]
         assert new_prop in change.location
         assert parent_prop in change.location
         assert change.depth == 1
@@ -245,7 +245,7 @@ class TestAddingProp:
             old_version=BASE_VERSION,
         )
         # assert
-        changes = [change.attribute for change in release.changes.changes]
+        changes = [change.attribute for change in release.changes]
         assert len(changes) == 2
         assert "cost" in changes
         assert "quantity" in changes
@@ -275,7 +275,7 @@ class TestRemovingProp:
             old_version=BASE_VERSION,
         )
         # assert - confirm the release has the right version
-        assert_release_kind(release, wanted=ChangeLevel.REVISION)
+        assert_release_level(release, wanted=ChangeLevel.REVISION)
 
     def test_remove_optional_prop_with_extra_props_allowed_implicitly(self):
         """
@@ -299,7 +299,7 @@ class TestRemovingProp:
             old_version=BASE_VERSION,
         )
         # assert
-        assert_release_kind(got=release, wanted=ChangeLevel.ADDITION)
+        assert_release_level(got=release, wanted=ChangeLevel.ADDITION)
 
     def test_remove_optional_prop_with_extra_props_allowed_explicitly(self):
         """
@@ -323,7 +323,7 @@ class TestRemovingProp:
             old_version=BASE_VERSION,
         )
         # assert
-        assert_release_kind(got=release, wanted=ChangeLevel.ADDITION)
+        assert_release_level(got=release, wanted=ChangeLevel.ADDITION)
 
     def test_remove_required_prop_with_extra_props_banned(self):
         """
@@ -346,7 +346,7 @@ class TestRemovingProp:
             old_version=BASE_VERSION,
         )
         # assert
-        assert_release_kind(got=release, wanted=ChangeLevel.MODEL)
+        assert_release_level(got=release, wanted=ChangeLevel.MODEL)
 
     def test_remove_required_prop_with_extra_props_allowed_implicitly(self):
         """
@@ -370,7 +370,7 @@ class TestRemovingProp:
             old_version=BASE_VERSION,
         )
         # assert
-        assert_release_kind(got=release, wanted=ChangeLevel.ADDITION)
+        assert_release_level(got=release, wanted=ChangeLevel.ADDITION)
 
     def test_remove_required_prop_with_extra_props_allowed_explicitly(self):
         """
@@ -394,7 +394,7 @@ class TestRemovingProp:
             old_version=BASE_VERSION,
         )
         # assert
-        assert_release_kind(got=release, wanted=ChangeLevel.ADDITION)
+        assert_release_level(got=release, wanted=ChangeLevel.ADDITION)
 
     def test_remove_prop_from_nested_object(self):
         """Nested props should be accessed through recursion."""
@@ -417,8 +417,8 @@ class TestRemovingProp:
             old_version=BASE_VERSION,
         )
         # assert
-        assert_release_kind(got=release, wanted=ChangeLevel.REVISION)
-        change = release.changes.changes[0]
+        assert_release_level(got=release, wanted=ChangeLevel.REVISION)
+        change = release.changes[0]
         assert nested_prop in change.location
         assert parent_prop in change.location
         assert change.depth == 1
@@ -438,7 +438,7 @@ class TestRemovingProp:
             old_version=BASE_VERSION,
         )
         # assert
-        changes = [change.attribute for change in release.changes.changes]
+        changes = [change.attribute for change in release.changes]
         assert len(changes) == 2
         assert "productName" in changes
         assert PROP_ENUM in changes
@@ -502,7 +502,7 @@ class TestChangingValidation:
             old_version=BASE_VERSION,
         )
         # assert
-        assert_release_kind(got=release, wanted=ChangeLevel.REVISION)
+        assert_release_level(got=release, wanted=ChangeLevel.REVISION)
 
     @pytest.mark.parametrize(("prop", "attr", "value"), VALIDATION_EXAMPLES)
     def test_removing_existing_validations_should_result_in_an_addition(
@@ -529,7 +529,7 @@ class TestChangingValidation:
             old_version=BASE_VERSION,
         )
         # assert
-        assert_release_kind(got=release, wanted=ChangeLevel.ADDITION)
+        assert_release_level(got=release, wanted=ChangeLevel.ADDITION)
 
 
 class TestChangingMetadata:
@@ -569,7 +569,7 @@ class TestChangingMetadata:
             old_version=BASE_VERSION,
         )
         # assert
-        assert_release_kind(got=release, wanted=ChangeLevel.ADDITION)
+        assert_release_level(got=release, wanted=ChangeLevel.ADDITION)
 
     @pytest.mark.parametrize(("prop", "attr", "value"), VALIDATION_EXAMPLES)
     def test_removing_existing_metadata_should_result_in_an_addition(
@@ -595,7 +595,7 @@ class TestChangingMetadata:
             old_version=BASE_VERSION,
         )
         # assert
-        assert_release_kind(got=release, wanted=ChangeLevel.ADDITION)
+        assert_release_level(got=release, wanted=ChangeLevel.ADDITION)
 
     @pytest.mark.parametrize(
         ("prop", "attr", "old_value", "new_value"),
@@ -635,4 +635,4 @@ class TestChangingMetadata:
             old_version=BASE_VERSION,
         )
         # assert
-        assert_release_kind(got=release, wanted=ChangeLevel.ADDITION)
+        assert_release_level(got=release, wanted=ChangeLevel.ADDITION)

@@ -92,7 +92,7 @@ class PropertyDiff:
                 attribute=prop,
                 location=context.field_name + f"['properties']['{prop}']",
             )
-            changelog.changes.append(change)
+            changelog.add(change)
 
         # record changes for REQUIRED props that were ADDED
         for prop in self.added.required:
@@ -168,7 +168,7 @@ class AttributeDiff:
                 location=context.field_name + f"['{attr}']",
                 depth=context.curr_depth,
             )
-            changelog.changes.append(change)
+            changelog.add(change)
 
         # record changes for METADATA attributes that were ADDED
         for attr in self.added.metadata:

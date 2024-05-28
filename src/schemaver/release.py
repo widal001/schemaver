@@ -20,7 +20,7 @@ class Release:
     old_version: Version
     new_schema: dict
     old_schema: dict
-    kind: ChangeLevel
+    level: ChangeLevel
     changes: Changelog
 
     def __init__(
@@ -36,11 +36,11 @@ class Release:
             schema_now=new_schema,
             schema_before=old_schema,
             context=SchemaContext(),
-            changelog=Changelog(changes=[]),
+            changelog=Changelog(),
         )
-        self.kind = self.changes.change_level
+        self.level = self.changes.highest_level
         self.old_version = Version(old_version)
-        self.new_version = self.old_version.bump(self.kind)
+        self.new_version = self.old_version.bump(self.level)
 
 
 def _parse_changes_recursively(
