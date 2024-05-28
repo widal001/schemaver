@@ -17,9 +17,9 @@ class ChangeLevel(Enum):
     https://docs.snowplow.io/docs/pipeline-components-and-applications/iglu/common-architecture/schemaver/
     """
 
-    MODEL = "model_changes"
-    REVISION = "revisions"
-    ADDITION = "additions"
+    MODEL = "model"
+    REVISION = "revision"
+    ADDITION = "addition"
     NONE = "no change"
 
 

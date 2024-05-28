@@ -28,10 +28,25 @@ class Changelog:
         # Iterate through the levels starting with MODEL and
         # return the highest level with at least one change
         for level in ChangeLevel:
-            if self.filter_changes(level):
+            if self.filter(level):
                 return level
         return ChangeLevel.NONE
 
-    def filter_changes(self, level: ChangeLevel) -> list[SchemaChange]:
+    @property
+    def model(self) -> list[SchemaChange]:
+        """Model-level schema changes."""
+        return self.filter(ChangeLevel.MODEL)
+
+    @property
+    def revision(self) -> list[SchemaChange]:
+        """Revision-level schema changes."""
+        return self.filter(ChangeLevel.REVISION)
+
+    @property
+    def addition(self) -> list[SchemaChange]:
+        """Revision-level schema changes."""
+        return self.filter(ChangeLevel.ADDITION)
+
+    def filter(self, level: ChangeLevel) -> list[SchemaChange]:
         """Filter changelog by level."""
         return [change for change in self.changes if change.kind == level]

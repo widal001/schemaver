@@ -21,7 +21,7 @@ class Release:
     new_schema: dict
     old_schema: dict
     kind: ChangeLevel
-    changelog: Changelog
+    changes: Changelog
 
     def __init__(
         self,
@@ -32,13 +32,13 @@ class Release:
         """Compare two schemas and create a release with the correct SchemaVer and Changelog."""
         self.new_schema = new_schema
         self.old_schema = old_schema
-        self.changelog = _parse_changes_recursively(
+        self.changes = _parse_changes_recursively(
             schema_now=new_schema,
             schema_before=old_schema,
             context=SchemaContext(),
             changelog=Changelog(changes=[]),
         )
-        self.kind = self.changelog.change_level
+        self.kind = self.changes.change_level
         self.old_version = Version(old_version)
         self.new_version = self.old_version.bump(self.kind)
 

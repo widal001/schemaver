@@ -45,10 +45,10 @@ def assert_release_kind(got: Release, wanted: ChangeLevel):
     """Confirm the release matches expectations."""
     assert got.kind == wanted
     assert str(got.new_version) == VERSION_LOOKUP[wanted]
-    assert len(got.changelog.filter_changes(wanted)) > 0
+    assert len(got.changes.filter(wanted)) > 0
     for level in ChangeLevel:
         if level not in (wanted, ChangeLevel.NONE):
-            assert not got.changelog.filter_changes(level)
+            assert not got.changes.filter(level)
 
 
 class TestAddingProp:
@@ -225,7 +225,7 @@ class TestAddingProp:
         )
         # assert
         assert_release_kind(got=release, wanted=ChangeLevel.ADDITION)
-        change = release.changelog.changes[0]
+        change = release.changes.changes[0]
         assert new_prop in change.location
         assert parent_prop in change.location
         assert change.depth == 1
@@ -245,7 +245,7 @@ class TestAddingProp:
             old_version=BASE_VERSION,
         )
         # assert
-        changes = [change.attribute for change in release.changelog.changes]
+        changes = [change.attribute for change in release.changes.changes]
         assert len(changes) == 2
         assert "cost" in changes
         assert "quantity" in changes
@@ -418,7 +418,7 @@ class TestRemovingProp:
         )
         # assert
         assert_release_kind(got=release, wanted=ChangeLevel.REVISION)
-        change = release.changelog.changes[0]
+        change = release.changes.changes[0]
         assert nested_prop in change.location
         assert parent_prop in change.location
         assert change.depth == 1
@@ -438,7 +438,7 @@ class TestRemovingProp:
             old_version=BASE_VERSION,
         )
         # assert
-        changes = [change.attribute for change in release.changelog.changes]
+        changes = [change.attribute for change in release.changes.changes]
         assert len(changes) == 2
         assert "productName" in changes
         assert PROP_ENUM in changes
