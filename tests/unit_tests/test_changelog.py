@@ -7,17 +7,17 @@ from schemaver.lookup import ChangeLevel
 
 CHANGES = {
     ChangeLevel.MODEL: SchemaChange(
-        kind=ChangeLevel.MODEL,
+        level=ChangeLevel.MODEL,
         description="Added a required property",
         attribute="cost",
     ),
     ChangeLevel.REVISION: SchemaChange(
-        kind=ChangeLevel.REVISION,
+        level=ChangeLevel.REVISION,
         description="Added new validation",
         attribute="enum",
     ),
     ChangeLevel.ADDITION: SchemaChange(
-        kind=ChangeLevel.ADDITION,
+        level=ChangeLevel.ADDITION,
         description="Added new metadata",
         attribute="description",
     ),
@@ -49,7 +49,7 @@ class TestProperties:
         got = changes.model
         # assert
         assert len(got) == 1
-        assert got[0].kind == ChangeLevel.MODEL
+        assert got[0].level == ChangeLevel.MODEL
 
     def test_revision(self, changes: Changelog):
         """The Changelog.revision property should filter for revision-level changes."""
@@ -57,7 +57,7 @@ class TestProperties:
         got = changes.revision
         # assert
         assert len(got) == 1
-        assert got[0].kind == ChangeLevel.REVISION
+        assert got[0].level == ChangeLevel.REVISION
 
     def test_addition(self, changes: Changelog):
         """The Changelog.addition property should filter for addition-level changes."""
@@ -65,7 +65,7 @@ class TestProperties:
         got = changes.addition
         # assert
         assert len(got) == 1
-        assert got[0].kind == ChangeLevel.ADDITION
+        assert got[0].level == ChangeLevel.ADDITION
 
 
 class TestChangeLevel:

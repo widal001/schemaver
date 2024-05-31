@@ -10,7 +10,7 @@ from schemaver.lookup import ChangeLevel
 class SchemaChange:
     """Characterize an individual change made to a JSON schema."""
 
-    kind: ChangeLevel
+    level: ChangeLevel
     description: str
     attribute: str
     depth: int = 0
@@ -81,7 +81,7 @@ class Changelog:
 
     def filter(self, level: ChangeLevel) -> list[SchemaChange]:
         """Filter changelog by level."""
-        return [change for change in self._changes if change.kind == level]
+        return [change for change in self._changes if change.level == level]
 
     def __iter__(self) -> Iterator[SchemaChange]:
         """Iterate over the changes in the changelog."""

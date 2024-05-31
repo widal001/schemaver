@@ -61,3 +61,28 @@ def test_include_all_changes_in_summary(release: Release):
     assert PROP_COST in summary
     assert PROP_ARRAY in summary
     assert PROP_FOO in summary
+
+
+def test_exclude_change_level_without_changes_from_summary(release: Release):
+    """Summary should exclude a change level if there are no changes in it."""
+    # arrange
+    change = release.changes._changes.pop(1)  # noqa: SLF001
+    assert not release.changes.filter(change.level)
+    # act
+    summary = release.summarize()
+    # assert
+    assert change.level.value.title() not in summary
+
+
+def test_exclude_changes_section_from_summary_if_no_change_between_schemas():
+    """Summary should exclude the entire changes section if there is no change."""
+    # arrange
+    old = deepcopy(BASE_SCHEMA)
+    new = deepcopy(old)
+    release = Release(new, old, BASE_VERSION)
+    assert not release.changes
+    # act
+    summary = release.summarize()
+    # assert
+    assert "no change" in summary
+    assert "Changes" not in summary

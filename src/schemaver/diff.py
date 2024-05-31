@@ -93,7 +93,7 @@ class PropertyDiff:
                 )
             # set the message
             change = SchemaChange(
-                kind=PROP_LOOKUP[diff][required][extra_props],
+                level=PROP_LOOKUP[diff][required][extra_props],
                 depth=context.curr_depth,
                 description=message,
                 attribute=prop,
@@ -165,11 +165,11 @@ class AttributeDiff:
         def record_change(
             attr: str,
             message: str,
-            kind: ChangeLevel,
+            level: ChangeLevel,
         ) -> None:
             """Categorize and record a change made to a property's attribute."""
             change = SchemaChange(
-                kind=kind,
+                level=level,
                 description=message.format(attr=attr, loc=context.location),
                 attribute=attr,
                 location=context.location,
@@ -180,21 +180,21 @@ class AttributeDiff:
         # record changes for METADATA attributes that were ADDED
         for attr in self.added.metadata:
             message = "Metadata attribute '{attr}' was added to '{loc}'."
-            record_change(attr, message, kind=ChangeLevel.ADDITION)
+            record_change(attr, message, level=ChangeLevel.ADDITION)
         # record changes for METADATA attributes that were REMOVED
         for attr in self.removed.metadata:
             message = "Metadata attribute '{attr}' was removed from '{loc}'."
-            record_change(attr, message, kind=ChangeLevel.ADDITION)
+            record_change(attr, message, level=ChangeLevel.ADDITION)
         # record changes for METADATA attributes that were MODIFIED
         for attr in self.changed.metadata:
             message = "Metadata attribute '{attr}' was modified on '{loc}'."
-            record_change(attr, message, kind=ChangeLevel.ADDITION)
+            record_change(attr, message, level=ChangeLevel.ADDITION)
         # record changes for VALIDATION attributes that were ADDED
         for attr in self.added.validation:
             message = "Validation attribute '{attr}' was added to '{loc}'."
-            record_change(attr, message, kind=ChangeLevel.REVISION)
+            record_change(attr, message, level=ChangeLevel.REVISION)
         # record changes for VALIDATION attributes that were REMOVED
         for attr in self.removed.validation:
             message = "Validation attribute '{attr}' was removed from '{loc}'."
-            record_change(attr, message, kind=ChangeLevel.ADDITION)
+            record_change(attr, message, level=ChangeLevel.ADDITION)
         return changelog
