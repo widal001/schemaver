@@ -1,3 +1,4 @@
+# pylint: disable = W0212
 """Test the Release.get_summary() method."""
 
 from copy import deepcopy
