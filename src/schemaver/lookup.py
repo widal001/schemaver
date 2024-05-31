@@ -100,7 +100,7 @@ VALIDATION_FIELDS = {option.value for option in ValidationField}
 class SchemaContext:
     """Context about the current schema."""
 
-    field_name: str = "root"
+    location: str = "root"
     curr_depth: int = 0
     required_before: bool = True
     required_now: bool = True
