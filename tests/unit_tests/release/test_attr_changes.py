@@ -7,7 +7,7 @@ import pytest
 from schemaver.lookup import ChangeLevel, MetadataField, ValidationField
 from schemaver.release import Release
 
-from tests.unit_tests.release.helpers import (
+from tests.helpers import (
     BASE_SCHEMA,
     BASE_VERSION,
     PROP_ANY,

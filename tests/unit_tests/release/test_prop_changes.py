@@ -7,7 +7,7 @@ import pytest
 from schemaver.release import Release
 from schemaver.lookup import ChangeLevel, ExtraProps, Required
 
-from tests.unit_tests.release.helpers import (
+from tests.helpers import (
     BASE_SCHEMA,
     BASE_VERSION,
     PROP_ENUM,
@@ -95,7 +95,7 @@ class TestAddingProp:
         # assert
         assert_release_level(got=release, wanted=ChangeLevel.ADDITION)
         change = release.changes[0]
-        assert new_prop in change.location
+        assert new_prop == change.attribute
         assert parent_prop in change.location
         assert change.depth == 1
 
@@ -195,7 +195,7 @@ class TestRemovingProp:
         # assert
         assert_release_level(got=release, wanted=ChangeLevel.REVISION)
         change = release.changes[0]
-        assert nested_prop in change.location
+        assert nested_prop == change.attribute
         assert parent_prop in change.location
         assert change.depth == 1
 
