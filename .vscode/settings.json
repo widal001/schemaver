@@ -1,6 +1,7 @@
 {
     "cSpell.words": [
-        "schemaver"
+        "schemaver",
+        "typer"
     ],
     "python.analysis.typeCheckingMode": "basic"
 }
