@@ -10,7 +10,7 @@ from schemaver.lookup import ChangeLevel
 class SchemaChange:
     """Characterize an individual change made to a JSON schema."""
 
-    kind: ChangeLevel
+    level: ChangeLevel
     description: str
     attribute: str
     depth: int = 0
@@ -27,6 +27,27 @@ class Changelog:
     def add(self, change: SchemaChange) -> None:
         """Add a change to the changelog."""
         self._changes.append(change)
+
+    def summarize(self) -> str:
+        """Format the list of changes as a string."""
+        if not self._changes:
+            return ""
+        summary = "## Changes\n"
+        summary += self._summarize_changes(ChangeLevel.MODEL)
+        summary += self._summarize_changes(ChangeLevel.REVISION)
+        summary += self._summarize_changes(ChangeLevel.ADDITION)
+        return summary
+
+    def _summarize_changes(self, level: ChangeLevel) -> str:
+        """Summarize the list of changes as a string in the given format."""
+        summary = ""
+        changes = self.filter(level)
+        if not changes:
+            return summary
+        summary += f"\n### {level.value.title()} level\n"
+        for change in changes:
+            summary += f"- {change.description}\n"
+        return summary
 
     @property
     def highest_level(self) -> ChangeLevel:
@@ -60,7 +81,7 @@ class Changelog:
 
     def filter(self, level: ChangeLevel) -> list[SchemaChange]:
         """Filter changelog by level."""
-        return [change for change in self._changes if change.kind == level]
+        return [change for change in self._changes if change.level == level]
 
     def __iter__(self) -> Iterator[SchemaChange]:
         """Iterate over the changes in the changelog."""
@@ -69,3 +90,7 @@ class Changelog:
     def __getitem__(self, index: int) -> SchemaChange:
         """Get an item from the changelog."""
         return self._changes[index]
+
+    def __len__(self) -> int:
+        """Get the size of the changelog."""
+        return len(self._changes)

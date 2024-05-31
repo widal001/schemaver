@@ -42,6 +42,18 @@ class Release:
         self.old_version = Version(old_version)
         self.new_version = self.old_version.bump(self.level)
 
+    def summarize(self) -> str:
+        """Summarize the release details and changes."""
+        summary = f"""
+## Summary
+- **New version**: `{self.new_version}`
+- **Previous version**: `{self.old_version}`
+- **Release level**: {self.level.value}
+- **Total changes**: {len(self.changes)}\n
+"""
+        summary += self.changes.summarize()
+        return summary.strip()
+
 
 def _parse_changes_recursively(
     schema_now: dict,
@@ -98,7 +110,7 @@ def _parse_changes_recursively(
         for prop in prop_diff.changed:
             context = SchemaContext(
                 curr_depth=context.curr_depth + 1,
-                field_name=context.field_name + f"['properties']['{prop}']",
+                location=context.location + f".properties.{prop}",
                 required_now=prop in required_now,
                 required_before=prop in required_before,
             )

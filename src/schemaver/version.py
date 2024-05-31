@@ -34,11 +34,11 @@ class Version:
         self.revision = int(version_match.group("revision"))
         self.addition = int(version_match.group("addition"))
 
-    def bump(self, kind: ChangeLevel) -> Version:
+    def bump(self, level: ChangeLevel) -> Version:
         """Return a new version with an updated model, revision, and addition."""
         # make a copy of the current version
         new_version = deepcopy(self)
-        match kind:
+        match level:
             case ChangeLevel.MODEL:
                 # Increment model, reset others to 0
                 new_version.model += 1
