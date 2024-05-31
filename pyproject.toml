@@ -5,6 +5,9 @@ license = "MIT License"
 name = "schemaver"
 version = "0.1.0"
 
+[tool.poetry.scripts]
+schemaver = "schemaver.cli:app"
+
 [tool.poetry.dependencies]
 deepdiff = "^7.0.1"
 mypy = "^1.10.0"
@@ -49,6 +52,7 @@ line-length = 79
 disable = [
   "R0903", # Disables too few public methods
   "R0801", # Disables duplicate code warning
+  "W1514", # Disables unspecified encoding
 ]
 
 [tool.ruff]
