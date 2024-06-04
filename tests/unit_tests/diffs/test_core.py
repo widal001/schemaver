@@ -1,14 +1,15 @@
-"""Test recording the diff between string instance types."""
+"""Test recording the diff for core validation fields between any type."""
 
 import pytest
 
+from schemaver.property import Property
 from schemaver.lookup import (
     ChangeLevel,
     InstanceType,
+    CoreField,
+    NumericField,
     StringField,
-    ArrayField,
 )
-from schemaver.property import Property
 
 from tests.unit_tests.diffs.helpers import (
     assert_changes,
@@ -17,29 +18,32 @@ from tests.unit_tests.diffs.helpers import (
     arrange_remove_attribute,
 )
 
-BASE_SCHEMA = {"type": "string"}
-VALIDATION_CHANGES = [
-    (StringField.MAX_LENGTH.value, 10),
-    (StringField.MIN_LENGTH.value, 10),
-    (StringField.PATTERN.value, "[A-z]+"),
+# empty schema allows any type
+BASE_SCHEMA = {}
+EXAMPLES = [
+    (CoreField.TYPE.value, "string"),
+    (CoreField.ENUM.value, ["foo", "bar"]),
+    (CoreField.FORMAT.value, "email"),
 ]
 
 
-class TestDiffString:
-    """Test adding, removing, or changing validation specific to string types."""
+class TestDiffCore:
+    """Test adding removing, or changing the validation fields shared by all types."""
 
     def test_init_string(self):
         """Property class correctly initializes when type is 'integer'."""
         # act
         prop = Property(BASE_SCHEMA)
         # assert
-        assert prop.kind == InstanceType.STRING
+        assert prop.kind == InstanceType.ANY
 
     @pytest.mark.parametrize(
         ("attr", "value"),
         [
-            (ArrayField.MIN_ITEMS.value, 10),
-            (ArrayField.MAX_CONTAINS.value, 10),
+            (NumericField.MIN.value, 10),
+            (NumericField.MAX.value, 10),
+            (StringField.MIN_LENGTH.value, 10),
+            (StringField.MAX_LENGTH.value, 10),
         ],
     )
     def test_ignore_validations_for_other_instance_types(
@@ -60,7 +64,7 @@ class TestDiffString:
         }
         assert_changes(got=setup.changelog, wanted=wanted)
 
-    @pytest.mark.parametrize(("attr", "value"), VALIDATION_CHANGES)
+    @pytest.mark.parametrize(("attr", "value"), EXAMPLES)
     def test_adding_validation_logs_a_revision(self, attr: str, value: int):
         """Adding validation should log a revision-level change to the changelog."""
         # arrange
@@ -70,7 +74,7 @@ class TestDiffString:
         # assert
         assert_changes(got=setup.changelog, wanted={ChangeLevel.REVISION: 1})
 
-    @pytest.mark.parametrize(("attr", "value"), VALIDATION_CHANGES)
+    @pytest.mark.parametrize(("attr", "value"), EXAMPLES)
     def test_removing_validation_logs_an_addition(self, attr: str, value: int):
         """Decreasing MAX should log a revision-level change to the changelog."""
         # arrange
@@ -80,61 +84,44 @@ class TestDiffString:
         # assert
         assert_changes(got=setup.changelog, wanted={ChangeLevel.ADDITION: 1})
 
-    def test_increasing_max_logs_an_addition(self):
-        """Increasing MAX should log an addition-level change to the changelog."""
+    def test_changing_types_logs_a_model_change(self):
+        """Changing the type attribute logs a MODEL-level change."""
         # arrange
-        value = 10
         setup = arrange_change_attribute(
             base=BASE_SCHEMA,
-            attr=StringField.MAX_LENGTH.value,
-            old_val=value,
-            new_val=value + 5,
+            attr=CoreField.TYPE.value,
+            old_val="string",
+            new_val="integer",
         )
         # act
         setup.new_schema.diff(setup.old_schema, setup.changelog)
         # assert
-        assert_changes(got=setup.changelog, wanted={ChangeLevel.ADDITION: 1})
+        assert_changes(got=setup.changelog, wanted={ChangeLevel.MODEL: 1})
 
-    def test_decreasing_max_logs_a_revision(self):
-        """Decreasing MAX should log an revision-level change to the changelog."""
+    def test_changing_enum_logs_a_revision(self):
+        """Changing the enum attribute results in a REVISION-level change."""
         # arrange
-        value = 10
         setup = arrange_change_attribute(
             base=BASE_SCHEMA,
-            attr=StringField.MAX_LENGTH.value,
-            old_val=value,
-            new_val=value - 5,
+            attr=CoreField.ENUM.value,
+            old_val=["foo", "bar"],
+            new_val=["bar"],
         )
         # act
         setup.new_schema.diff(setup.old_schema, setup.changelog)
         # assert
         assert_changes(got=setup.changelog, wanted={ChangeLevel.REVISION: 1})
 
-    def test_increasing_min_logs_a_revision(self):
-        """Increasing MIN should log an revision-level change to the changelog."""
-        value = 10
+    def test_changing_format_logs_a_revision(self):
+        """Changing the format attribute logs a REVISION-level change."""
+        # arrange
         setup = arrange_change_attribute(
             base=BASE_SCHEMA,
-            attr=StringField.MIN_LENGTH.value,
-            old_val=value,
-            new_val=value + 5,
+            attr=CoreField.FORMAT.value,
+            old_val="uuid",
+            new_val="email",
         )
         # act
         setup.new_schema.diff(setup.old_schema, setup.changelog)
         # assert
         assert_changes(got=setup.changelog, wanted={ChangeLevel.REVISION: 1})
-
-    def test_decreasing_min_logs_an_addition(self):
-        """Decreasing MIN should log an addition-level change to the changelog."""
-        # arrange
-        value = 10
-        setup = arrange_change_attribute(
-            base=BASE_SCHEMA,
-            attr=StringField.MIN_LENGTH.value,
-            old_val=value,
-            new_val=value - 5,
-        )
-        # act
-        setup.new_schema.diff(setup.old_schema, setup.changelog)
-        # assert
-        assert_changes(got=setup.changelog, wanted={ChangeLevel.ADDITION: 1})

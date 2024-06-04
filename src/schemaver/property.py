@@ -58,9 +58,7 @@ class Property:
             return changelog
         # Otherwise proceed with type-specific diffing
         match self.kind:
-            case InstanceType.NUMBER:
-                return self._log_diff(old, changelog, NumericValidationDiff)
-            case InstanceType.INTEGER:
+            case InstanceType.NUMBER | InstanceType.INTEGER:
                 return self._log_diff(old, changelog, NumericValidationDiff)
             case InstanceType.STRING:
                 return self._log_diff(old, changelog, StringValidationDiff)

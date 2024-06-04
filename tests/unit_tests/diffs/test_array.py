@@ -1,6 +1,4 @@
-"""Test the Property class for array instance types."""
-
-from copy import deepcopy
+"""Test recording the diff between array instance types."""
 
 import pytest
 
@@ -12,7 +10,6 @@ from schemaver.lookup import (
     NumericField,
 )
 from schemaver.property import Property
-from schemaver.changelog import Changelog
 
 from tests.unit_tests.diffs.helpers import (
     assert_changes,
@@ -32,8 +29,8 @@ VALIDATION_CHANGES = [
 ]
 
 
-class TestDiffString:
-    """Test adding, removing, or changing validation specific to numeric types."""
+class TestDiffArray:
+    """Test adding, removing, or changing validation specific to array types."""
 
     def test_init_string(self):
         """Property class correctly initializes when type is 'integer'."""
@@ -57,24 +54,17 @@ class TestDiffString:
         value: int,
     ):
         """Changes to non-numeric validations should be ignored."""
-        # arrange - add validation to the new schema
-        old: dict = deepcopy(BASE_SCHEMA)
-        new: dict = deepcopy(old)
-        new[attr] = value
-        assert new != old
-        # arrange - create properties and changelog
-        changelog = Changelog()
-        old_prop = Property(old)
-        new_prop = Property(new)
+        # arrange
+        setup = arrange_add_attribute(BASE_SCHEMA, attr, value)
         # act
-        new_prop.diff(old_prop, changelog)
+        setup.new_schema.diff(setup.old_schema, setup.changelog)
         # assert
         wanted = {
             ChangeLevel.ADDITION: 0,
             ChangeLevel.REVISION: 0,
             ChangeLevel.MODEL: 0,
         }
-        assert_changes(got=changelog, wanted=wanted)
+        assert_changes(got=setup.changelog, wanted=wanted)
 
     @pytest.mark.parametrize(("attr", "value"), VALIDATION_CHANGES)
     def test_adding_validation_logs_a_revision(self, attr: str, value: int):

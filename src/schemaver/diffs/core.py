@@ -53,7 +53,7 @@ class CoreValidationDiff(BaseDiff):
             # fmt: off
             level = (
                 ChangeLevel.MODEL
-                if attr == CoreField.TYPE.name
+                if attr == CoreField.TYPE.value
                 else ChangeLevel.REVISION
             )
             # fmt: on
