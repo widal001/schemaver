@@ -2,13 +2,22 @@
 
 from schemaver.changelog import Changelog, SchemaChange
 from schemaver.lookup import (
+    CORE_FIELDS,
     METADATA_FIELDS,
     PROP_LOOKUP,
+    VALIDATION_CHANGE_LOOKUP,
     VALIDATION_FIELDS,
+    ArrayField,
+    ChangeDirection,
     ChangeLevel,
     DiffType,
+    InstanceType,
+    NumericField,
+    ObjectField,
     Required,
     SchemaContext,
+    StringField,
+    ValidationType,
 )
 
 # ##############################
@@ -124,15 +133,18 @@ class PropertyDiff:
 class AttributesByType:
     """Set of attributes grouped by type, e.g. validation, metadata."""
 
-    def __init__(self, attrs: set[str]) -> None:
+    def __init__(self, attrs: set[str], kind: InstanceType) -> None:
         """Initialize the AttributeByTypes class."""
-        self.validation = attrs & VALIDATION_FIELDS
+        validation_fields = VALIDATION_FIELDS[kind] | CORE_FIELDS
+        self.validation = attrs & validation_fields
         self.metadata = attrs & METADATA_FIELDS
 
 
 class AttributeDiff:
     """List the attributes that were added, removed, or changed."""
 
+    new_schema: dict
+    old_schema: dict
     added: AttributesByType
     removed: AttributesByType
     changed: AttributesByType
@@ -141,19 +153,24 @@ class AttributeDiff:
         self,
         new_schema: dict,
         old_schema: dict,
+        prop_type: InstanceType,
     ) -> None:
         """Initialize the AttributeDiff."""
+        # save new and old schemas for later access
+        self.new_schema = new_schema
+        self.old_schema = old_schema
         # Use set math to get attrs that were added or removed
         new_attrs = set(new_schema)
         old_attrs = set(old_schema)
-        self.added = AttributesByType(new_attrs - old_attrs)
-        self.removed = AttributesByType(old_attrs - new_attrs)
+        self.added = AttributesByType(new_attrs - old_attrs, prop_type)
+        self.removed = AttributesByType(old_attrs - new_attrs, prop_type)
         # get the attributes that were modified
         changed = set()
         for attr in new_attrs & old_attrs:
             if new_schema[attr] != old_schema[attr]:
                 changed.add(attr)
-        self.changed = AttributesByType(changed)
+        self.changed = AttributesByType(changed, prop_type)
+        self._prop_type = prop_type
 
     def populate_changelog(
         self,
@@ -187,7 +204,10 @@ class AttributeDiff:
             record_change(attr, message, level=ChangeLevel.ADDITION)
         # record changes for METADATA attributes that were MODIFIED
         for attr in self.changed.metadata:
-            message = "Metadata attribute '{attr}' was modified on '{loc}'."
+            message = (
+                "Metadata attribute '{attr}' was modified on '{loc}' "
+                f"from {self.old_schema[attr]} to {self.new_schema[attr]}"
+            )
             record_change(attr, message, level=ChangeLevel.ADDITION)
         # record changes for VALIDATION attributes that were ADDED
         for attr in self.added.validation:
@@ -197,4 +217,46 @@ class AttributeDiff:
         for attr in self.removed.validation:
             message = "Validation attribute '{attr}' was removed from '{loc}'."
             record_change(attr, message, level=ChangeLevel.ADDITION)
+        for attr in self.changed.validation:
+            self._record_validation_change(attr, context, changelog)
         return changelog
+
+    def _record_validation_change(
+        self,
+        attr: str,
+        context: SchemaContext,
+        changelog: Changelog,
+    ) -> None:
+        """Record a change when the schema."""
+        old_val = self.old_schema[attr]
+        new_val = self.new_schema[attr]
+        message = (
+            f"Metadata attribute '{attr}' was modified on '{context.location}' "
+            f"from {old_val} to {new_val}"
+        )
+        # Get the attribute type (i.e. MAX, MIN, OTHER)
+        match self._prop_type:
+            case InstanceType.ARRAY:
+                attr_type = ArrayField(attr).kind
+            case InstanceType.OBJECT:
+                attr_type = ObjectField(attr).kind
+            case InstanceType.INTEGER:
+                attr_type = NumericField(attr).kind
+            case InstanceType.NUMBER:
+                attr_type = NumericField(attr).kind
+            case InstanceType.STRING:
+                attr_type = StringField(attr).kind
+            case _:
+                attr_type = ValidationType.OTHER
+        if attr_type == ValidationType.OTHER:
+            return
+        change_dir = ChangeDirection.UP if new_val > old_val else ChangeDirection.DOWN
+        level = VALIDATION_CHANGE_LOOKUP[attr_type][change_dir]
+        change = SchemaChange(
+            level=level,
+            description=message,
+            attribute=attr,
+            location=context.location,
+            depth=context.curr_depth,
+        )
+        changelog.add(change)

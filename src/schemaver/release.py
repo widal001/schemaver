@@ -6,9 +6,11 @@ from schemaver.changelog import Changelog
 from schemaver.diff import AttributeDiff, PropertyDiff
 from schemaver.lookup import (
     ChangeLevel,
+    CoreField,
     ExtraProps,
+    InstanceType,
+    ObjectField,
     SchemaContext,
-    ValidationField,
 )
 from schemaver.version import Version
 
@@ -63,12 +65,13 @@ def _parse_changes_recursively(
 ) -> Changelog:
     """Recursively work through each element of the schema and parse changes."""
     # create local variables to simplify accessing validation fields
-    props_attr = ValidationField.PROPS.value
-    required_attr = ValidationField.REQUIRED.value
-    extra_props = ValidationField.EXTRA_PROPS.value
+    props_attr = ObjectField.PROPS.value
+    required_attr = ObjectField.REQUIRED.value
+    extra_props = ObjectField.EXTRA_PROPS.value
     # get the attributes that were added, removed, or modified
     # populate the changelog with the differences
-    attr_diff = AttributeDiff(schema_now, schema_before)
+    prop_type = InstanceType(schema_now.get(CoreField.TYPE.value))
+    attr_diff = AttributeDiff(schema_now, schema_before, prop_type)
     changelog = attr_diff.populate_changelog(changelog, context)
     # determine if the properties have changed
     props_changed = (
