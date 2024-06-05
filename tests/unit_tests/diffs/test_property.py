@@ -14,9 +14,14 @@ from tests.unit_tests.diffs.helpers import assert_changes
 PROP_ID = "productId"
 PROP_NAME = "productName"
 PROP_COST = "cost"
+PROP_OBJECT = "nestedObject"
 BASE_SCHEMA = {
     "type": "object",
-    "properties": {"PROP_ID": {"type": "integer"}},
+    "properties": {
+        PROP_ID: {"type": "integer"},
+        PROP_NAME: {"type": "string"},
+        PROP_OBJECT: {"type": "object", "properties": {}},
+    },
     "required": [PROP_ID],
     "additionalProperties": False,
 }
@@ -33,6 +38,8 @@ class TestAddingProp:
         self,
         new_prop_status: Required,
         extra_props_before: ExtraProps,
+        *,
+        nested: bool = False,
     ) -> None:
         """Arrange the old and new schemas for testing based on the input scenario."""
         # Arrange old schema
@@ -41,9 +48,14 @@ class TestAddingProp:
             old["additionalProperties"] = True
         # Arrange new schema
         new = deepcopy(old)
-        new["properties"]["cost"] = {"type": "number"}
+        if nested:
+            new["properties"][PROP_OBJECT]["properties"] = {
+                PROP_COST: {"type": "integer"},
+            }
+        else:
+            new["properties"][PROP_COST] = {"type": "number"}
         if new_prop_status == Required.YES:
-            new["required"].append("cost")
+            new["required"].append(PROP_COST)
         # print the new and old schemas
         print("Old schema:")
         pprint(old)
@@ -78,3 +90,92 @@ class TestAddingProp:
         self.new_schema.diff(self.old_schema, self.changelog)
         # assert
         assert_changes(got=self.changelog, wanted={release_level: 1})
+
+    def test_add_prop_to_nested_object(self):
+        """Nested props should be accessed through recursion."""
+        # arrange - add a nested object
+        self.arrange_schemas(Required.NO, ExtraProps.ALLOWED, nested=True)
+        # act
+        self.new_schema.diff(self.old_schema, self.changelog)
+        # assert
+        assert_changes(got=self.changelog, wanted={ChangeLevel.REVISION: 1})
+        change = self.changelog[0]
+        assert PROP_OBJECT in change.location
+        assert change.depth == 3
+
+
+class TestRemovingProp:
+    """Test result when removing a prop from the old schema."""
+
+    old_schema: Property
+    new_schema: Property
+    changelog: Changelog
+
+    def arrange_schemas(
+        self,
+        old_prop_status: Required,
+        extra_props_now: ExtraProps,
+        *,
+        nested: bool = False,
+    ) -> None:
+        """Arrange the old and new schemas for testing based on the input scenario."""
+        # Arrange new schema WITHOUT field
+        new = deepcopy(BASE_SCHEMA)
+        if extra_props_now == ExtraProps.ALLOWED:
+            new["additionalProperties"] = True
+        # Arrange old schema WITH field
+        old = deepcopy(BASE_SCHEMA)
+        if nested:
+            old["properties"][PROP_OBJECT]["properties"] = {
+                PROP_COST: {"type": "integer"},
+            }
+        else:
+            old["properties"][PROP_COST] = {"type": "number"}
+        if old_prop_status == Required.YES:
+            old["required"].append(PROP_COST)
+        # print the new and old schemas
+        print("Old schema:")
+        pprint(old)
+        print("New schema:")
+        pprint(new)
+        # Set values for use in tests
+        self.new_schema = Property(new)
+        self.old_schema = Property(old)
+        self.changelog = Changelog()
+
+    # fmt: off
+    @pytest.mark.parametrize(
+        ("old_prop_status", "extra_props_now", "release_level"),
+        [
+            (Required.NO,  ExtraProps.NOT_ALLOWED, ChangeLevel.REVISION),
+            (Required.NO,  ExtraProps.ALLOWED,     ChangeLevel.ADDITION),
+            (Required.YES, ExtraProps.NOT_ALLOWED, ChangeLevel.MODEL),
+            (Required.YES, ExtraProps.ALLOWED,     ChangeLevel.ADDITION),
+        ],
+    )
+    # fmt: on
+    def test_remove_existing_prop(
+        self,
+        old_prop_status: Required,
+        extra_props_now: ExtraProps,
+        release_level: ChangeLevel,
+    ):
+        """Test the various combinations of removing an existing prop from a schema."""
+        # arrange
+        self.arrange_schemas(old_prop_status, extra_props_now)
+        # act
+        self.new_schema.diff(self.old_schema, self.changelog)
+        # assert
+        assert_changes(got=self.changelog, wanted={release_level: 1})
+
+    def test_remove_prop_from_nested_object(self):
+        """Nested props should be accessed through recursion."""
+        # arrange - add a nested object
+        self.arrange_schemas(Required.NO, ExtraProps.ALLOWED, nested=True)
+        # act
+        self.new_schema.diff(self.old_schema, self.changelog)
+        # assert
+        assert_changes(got=self.changelog, wanted={ChangeLevel.ADDITION: 1})
+        change = self.changelog[0]
+        assert PROP_OBJECT in change.location
+        assert change.depth == 3

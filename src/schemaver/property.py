@@ -123,4 +123,21 @@ class Property:
             schema.context.extra_props = self.extra_props
         prop_diff = PropertyDiff(old_schema=old, new_schema=self)
         prop_diff.populate_changelog(changelog)
+        # if existing properties were changed
+        # recursively diff the sub-schema of each property
+        for prop in prop_diff.changed:
+            new_sub = self._init_sub_schema(self, prop)
+            old_sub = self._init_sub_schema(old, prop)
+            return new_sub.diff(old=old_sub, changelog=changelog)
         return changelog
+
+    @classmethod
+    def _init_sub_schema(cls, parent: Property, prop: str) -> Property:
+        """Init a new sub-schema from a parent schema."""
+        context = SchemaContext(
+            location=f"{parent.context.location}.{prop}",
+            curr_depth=parent.context.curr_depth + 1,
+            is_required=prop in parent.required_props,
+            extra_props=parent.extra_props,
+        )
+        return cls(parent.schema["properties"][prop], context)
