@@ -5,14 +5,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from schemaver.changelog import Changelog, SchemaChange
-from schemaver.diffs.base import BaseDiff
 from schemaver.lookup import PROP_LOOKUP, DiffType, ObjectField, Required
 
 if TYPE_CHECKING:
     from schemaver.property import Property
 
 
-class PropertyDiff(BaseDiff):
+class PropertyDiff:
     """List the props added, removed, or changed grouped by required status."""
 
     new_schema: Property

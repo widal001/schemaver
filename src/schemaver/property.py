@@ -117,7 +117,7 @@ class Property:
             return changelog
         # update the context then diff the properties
         for schema in [self, old]:
-            schema: Property
+            schema: Property  # type: ignore[no-redef]
             schema.context.curr_depth += 1
             schema.context.location += ".properties"
             schema.context.extra_props = self.extra_props

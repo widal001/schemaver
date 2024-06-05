@@ -38,18 +38,17 @@ class CoreValidationDiff(BaseDiff):
         changelog: Changelog,
     ) -> None:
         """Record change for modifications to existing validation attributes."""
-        for attr in self.changed:
-            message = "Validation attribute '{attr}' was modified on '{loc}' "
-            message += f"from {self.old_schema.schema[attr]} to {self.old_schema.schema[attr]}"
-            # fmt: off
-            level = (
-                ChangeLevel.MODEL
-                if attr == CoreField.TYPE.value
-                else ChangeLevel.REVISION
-            )
-            # fmt: on
-            change = self._record_change(attr, message, level)
-            changelog.add(change)
+        message = "Validation attribute '{attr}' was modified on '{loc}' "
+        message += f"from {self.old_schema.schema[attr]} to {self.old_schema.schema[attr]}"
+        # fmt: off
+        level = (
+            ChangeLevel.MODEL
+            if attr == CoreField.TYPE.value
+            else ChangeLevel.REVISION
+        )
+        # fmt: on
+        change = self._record_change(attr, message, level)
+        changelog.add(change)
 
     def _record_change(
         self,

@@ -27,6 +27,7 @@ class TestAddingProp:
 
     old_schema: Property
     new_schema: Property
+    changelog: Changelog
 
     def arrange_schemas(
         self,

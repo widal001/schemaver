@@ -250,7 +250,13 @@ class AttributeDiff:
                 attr_type = ValidationType.OTHER
         if attr_type == ValidationType.OTHER:
             return
-        change_dir = ChangeDirection.UP if new_val > old_val else ChangeDirection.DOWN
+        # fmt: off
+        change_dir = (
+            ChangeDirection.UP
+            if new_val > old_val
+            else ChangeDirection.DOWN
+        )
+        # fmt: on
         level = VALIDATION_CHANGE_LOOKUP[attr_type][change_dir]
         change = SchemaChange(
             level=level,
