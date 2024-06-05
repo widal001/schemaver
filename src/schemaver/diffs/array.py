@@ -9,7 +9,6 @@ from schemaver.lookup import ArrayField, ChangeLevel
 
 if TYPE_CHECKING:
     from schemaver.changelog import Changelog
-    from schemaver.property import Property
 
 
 MAX_FIELDS = {ArrayField.MAX_CONTAINS.value, ArrayField.MAX_ITEMS.value}
@@ -20,14 +19,6 @@ class ArrayValidationDiff(BaseDiff):
     """Record the numeric validation attributes that were added, removed, or changed."""
 
     FIELD_TYPE = ArrayField
-
-    added: set[str]
-    removed: set[str]
-    changed: set[str]
-
-    def __init__(self, new_schema: Property, old_schema: Property) -> None:
-        """Initialize the CoreFieldsDiff."""
-        super().__init__(new_schema, old_schema)
 
     def _record_change_for_existing_attrs(
         self,

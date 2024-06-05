@@ -11,8 +11,13 @@ def assert_changes(got: Changelog, wanted: dict[ChangeLevel, int]):
     """Assert that the changelog contains the correct number of changes."""
     # assert we got the total number of changes we wanted
     assert len(got) == sum(wanted.values())
-    for level, count in wanted.items():
-        assert len(got.filter(level)) == count
+    for change in got.all:
+        print(change)
+    for level, wanted_count in wanted.items():
+        got_count = len(got.filter(level))
+        print(f"Level: {level.value.title()}")
+        print(f"Got count: {got_count} Wanted count: {wanted_count}")
+        assert got_count == wanted_count
 
 
 @dataclass

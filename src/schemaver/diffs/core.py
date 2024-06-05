@@ -2,14 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from schemaver.changelog import Changelog, SchemaChange
 from schemaver.diffs.base import BaseDiff
 from schemaver.lookup import ChangeLevel, CoreField
-
-if TYPE_CHECKING:
-    from schemaver.property import Property
 
 
 class CoreValidationDiff(BaseDiff):
@@ -20,10 +15,6 @@ class CoreValidationDiff(BaseDiff):
     added: set[str]
     removed: set[str]
     changed: set[str]
-
-    def __init__(self, new_schema: Property, old_schema: Property) -> None:
-        """Initialize the CoreFieldsDiff."""
-        super().__init__(new_schema, old_schema)
 
     def populate_changelog(self, changelog: Changelog) -> Changelog:
         """Use the AttributeDiff to record changes and add them to the changelog."""

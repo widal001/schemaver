@@ -9,4 +9,5 @@ ignore = [
   "PT015", # Assertion always fails
   "S101", # Use of `assert` detected
   "T201", # `print` found
+  "T203", # `pprint` found
 ]

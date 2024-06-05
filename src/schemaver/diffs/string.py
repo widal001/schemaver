@@ -9,21 +9,12 @@ from schemaver.lookup import ChangeLevel, StringField
 
 if TYPE_CHECKING:
     from schemaver.changelog import Changelog
-    from schemaver.property import Property
 
 
 class StringValidationDiff(BaseDiff):
     """Record the numeric validation attributes that were added, removed, or changed."""
 
     FIELD_TYPE = StringField
-
-    added: set[str]
-    removed: set[str]
-    changed: set[str]
-
-    def __init__(self, new_schema: Property, old_schema: Property) -> None:
-        """Initialize the CoreFieldsDiff."""
-        super().__init__(new_schema, old_schema)
 
     def _record_change_for_existing_attrs(
         self,
@@ -39,8 +30,8 @@ class StringValidationDiff(BaseDiff):
         message += f"from {old_val} to {new_val}"
         # set the change level
         value_increased = new_val > old_val
-        min_field = StringField.MAX_LENGTH.value
-        max_field = StringField.MIN_LENGTH.value
+        min_field: str = StringField.MAX_LENGTH.value
+        max_field: str = StringField.MIN_LENGTH.value
         if attr == min_field and value_increased:
             # raising a MAX is an ADDITION
             level = ChangeLevel.ADDITION

@@ -9,27 +9,12 @@ from schemaver.lookup import ChangeLevel, MetadataField
 
 if TYPE_CHECKING:
     from schemaver.changelog import Changelog
-    from schemaver.property import Property
 
 
 class MetadataDiff(BaseDiff):
     """Record the metadata attributes that were added, removed, or changed."""
 
     FIELD_TYPE = MetadataField
-
-    new_schema: Property
-    old_schema: Property
-    added: set[str]
-    removed: set[str]
-    changed: set[str]
-
-    def __init__(
-        self,
-        new_schema: Property,
-        old_schema: Property,
-    ) -> None:
-        """Initialize the MetadataDiff."""
-        super().__init__(new_schema, old_schema)
 
     def populate_changelog(self, changelog: Changelog) -> Changelog:
         """Use the AttributeDiff to record changes and add them to the changelog."""

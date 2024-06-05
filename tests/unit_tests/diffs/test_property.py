@@ -1,0 +1,79 @@
+"""Test recording the diff of object properties between schema versions."""
+
+from copy import deepcopy
+from pprint import pprint
+
+import pytest
+
+from schemaver.changelog import Changelog
+from schemaver.lookup import ChangeLevel, ExtraProps, Required
+from schemaver.property import Property
+
+from tests.unit_tests.diffs.helpers import assert_changes
+
+PROP_ID = "productId"
+PROP_NAME = "productName"
+PROP_COST = "cost"
+BASE_SCHEMA = {
+    "type": "object",
+    "properties": {"PROP_ID": {"type": "integer"}},
+    "required": [PROP_ID],
+    "additionalProperties": False,
+}
+
+
+class TestAddingProp:
+    """Test result when adding a prop to the new schema."""
+
+    old_schema: Property
+    new_schema: Property
+
+    def arrange_schemas(
+        self,
+        new_prop_status: Required,
+        extra_props_before: ExtraProps,
+    ) -> None:
+        """Arrange the old and new schemas for testing based on the input scenario."""
+        # Arrange old schema
+        old = deepcopy(BASE_SCHEMA)
+        if extra_props_before == ExtraProps.ALLOWED:
+            old["additionalProperties"] = True
+        # Arrange new schema
+        new = deepcopy(old)
+        new["properties"]["cost"] = {"type": "number"}
+        if new_prop_status == Required.YES:
+            new["required"].append("cost")
+        # print the new and old schemas
+        print("Old schema:")
+        pprint(old)
+        print("New schema:")
+        pprint(new)
+        # Set values for use in tests
+        self.new_schema = Property(new)
+        self.old_schema = Property(old)
+        self.changelog = Changelog()
+
+    # fmt: off
+    @pytest.mark.parametrize(
+        ("new_prop_status", "extra_props_before", "release_level"),
+        [
+            (Required.NO,  ExtraProps.NOT_ALLOWED, ChangeLevel.ADDITION),
+            (Required.NO,  ExtraProps.ALLOWED,     ChangeLevel.REVISION),
+            (Required.YES, ExtraProps.NOT_ALLOWED, ChangeLevel.MODEL),
+            (Required.YES, ExtraProps.ALLOWED,     ChangeLevel.REVISION),
+        ],
+    )
+    # fmt: on
+    def test_add_new_prop(
+        self,
+        new_prop_status: Required,
+        extra_props_before: ExtraProps,
+        release_level: ChangeLevel,
+    ):
+        """Test the various combinations of adding a new prop to a schema."""
+        # arrange
+        self.arrange_schemas(new_prop_status, extra_props_before)
+        # act
+        self.new_schema.diff(self.old_schema, self.changelog)
+        # assert
+        assert_changes(got=self.changelog, wanted={release_level: 1})

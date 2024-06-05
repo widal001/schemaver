@@ -26,12 +26,15 @@ class BaseDiff:
     def __init__(self, new_schema: Property, old_schema: Property) -> None:
         """Initialize the CoreFieldsDiff."""
         # save new and old schemas for later access
-        attrs = {option.value for option in self.FIELD_TYPE}
         self.new_schema = new_schema
         self.old_schema = old_schema
         # Use set math to get validation attrs that were added or removed
-        new_attrs = set(new_schema.schema) & attrs
-        old_attrs = set(old_schema.schema) & attrs
+        new_attrs = set(new_schema.schema)
+        old_attrs = set(old_schema.schema)
+        if getattr(self, "FIELD_TYPE", None):
+            attrs = {option.value for option in self.FIELD_TYPE}
+            new_attrs = set(new_schema.schema) & attrs
+            old_attrs = set(old_schema.schema) & attrs
         self.added = new_attrs - old_attrs
         self.removed = old_attrs - new_attrs
         # get the validation attributes that were modified

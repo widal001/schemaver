@@ -11,9 +11,11 @@ from schemaver.diffs import (
     CoreValidationDiff,
     MetadataDiff,
     NumericValidationDiff,
+    ObjectValidationDiff,
+    PropertyDiff,
     StringValidationDiff,
 )
-from schemaver.lookup import CoreField, ExtraProps, InstanceType
+from schemaver.lookup import CoreField, ExtraProps, InstanceType, ObjectField
 
 if TYPE_CHECKING:
     from schemaver.changelog import Changelog
@@ -64,7 +66,36 @@ class Property:
                 return self._log_diff(old, changelog, StringValidationDiff)
             case InstanceType.ARRAY:
                 return self._log_diff(old, changelog, ArrayValidationDiff)
+            case InstanceType.OBJECT:
+                return self._diff_object(old, changelog)
         return changelog
+
+    @property
+    def required_props(self) -> set[str]:
+        """The set of required properties for this schema."""
+        # if the instance type is not an object, return an empty set
+        # even if there is a 'required' attribute present
+        if self.kind != InstanceType.OBJECT:
+            return set()
+        # otherwise return the value of 'required', or an empty set
+        return set(self.schema.get(ObjectField.REQUIRED.value, []))
+
+    @property
+    def extra_props(self) -> ExtraProps:
+        """The set of required properties for this schema."""
+        # if the instance type is not an object
+        # return the value of extra_props from the current context
+        if self.kind != InstanceType.OBJECT:
+            return self.context.extra_props
+        # if 'additionalProps' is unset or True, extra props are allowed
+        extra_props = self.schema.get(ObjectField.EXTRA_PROPS.value, True)
+        if extra_props is True:
+            return ExtraProps.ALLOWED
+        # if 'additionalProps' is false, extra props are banned
+        if extra_props is False:
+            return ExtraProps.NOT_ALLOWED
+        # if 'additionalProps' is a non-boolean value, extra props are restricted
+        return ExtraProps.VALIDATED
 
     def _log_diff(
         self,
@@ -75,4 +106,21 @@ class Property:
         """Use the provided diff class to find and record changes."""
         diff = diff_cls(old_schema=old, new_schema=self)
         diff.populate_changelog(changelog)
+        return changelog
+
+    def _diff_object(self, old: Property, changelog: Changelog) -> Changelog:
+        """Log the diff between two different objects."""
+        # diff the object's validation attributes
+        object_diff = ObjectValidationDiff(old_schema=old, new_schema=self)
+        object_diff.populate_changelog(changelog)
+        if not object_diff.properties_have_changed:
+            return changelog
+        # update the context then diff the properties
+        for schema in [self, old]:
+            schema: Property
+            schema.context.curr_depth += 1
+            schema.context.location += ".properties"
+            schema.context.extra_props = self.extra_props
+        prop_diff = PropertyDiff(old_schema=old, new_schema=self)
+        prop_diff.populate_changelog(changelog)
         return changelog
