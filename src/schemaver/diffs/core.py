@@ -2,9 +2,19 @@
 
 from __future__ import annotations
 
-from schemaver.changelog import Changelog, SchemaChange
+from enum import Enum
+
+from schemaver.changelog import ChangeLevel, Changelog, SchemaChange
 from schemaver.diffs.base import BaseDiff
-from schemaver.lookup import ChangeLevel, CoreField
+
+
+class CoreField(Enum):
+    """List of validation attributes supported by all instance types."""
+
+    # all instance types
+    TYPE = "type"
+    ENUM = "enum"
+    FORMAT = "format"
 
 
 class CoreValidationDiff(BaseDiff):

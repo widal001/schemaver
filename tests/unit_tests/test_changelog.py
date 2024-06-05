@@ -3,7 +3,7 @@
 import pytest
 
 from schemaver.changelog import Changelog, SchemaChange
-from schemaver.lookup import ChangeLevel
+from schemaver.changelog import ChangeLevel
 
 CHANGES = {
     ChangeLevel.MODEL: SchemaChange(

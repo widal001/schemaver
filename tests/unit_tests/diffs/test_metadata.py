@@ -2,8 +2,8 @@
 
 import pytest
 
-from schemaver.lookup import MetadataField
 from schemaver.changelog import ChangeLevel
+from schemaver.diffs.metadata import MetadataField
 
 from tests.unit_tests.diffs.helpers import (
     assert_changes,

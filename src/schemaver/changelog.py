@@ -1,9 +1,23 @@
 """Inventory a list of changes associated with a release."""
 
 from dataclasses import dataclass
+from enum import Enum
 from typing import Iterator
 
-from schemaver.lookup import ChangeLevel
+
+class ChangeLevel(Enum):
+    """
+    Characterize a change using the SchemaVer hierarchy.
+
+    This hierarchy is modeled after the Major.Minor.Patch hierarchy in SemVer.
+    Additional information about each change type be found at:
+    https://docs.snowplow.io/docs/pipeline-components-and-applications/iglu/common-architecture/schemaver/
+    """
+
+    MODEL = "model"
+    REVISION = "revision"
+    ADDITION = "addition"
+    NONE = "no change"
 
 
 @dataclass

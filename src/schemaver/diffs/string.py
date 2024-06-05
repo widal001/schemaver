@@ -2,13 +2,23 @@
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import TYPE_CHECKING
 
+from schemaver.changelog import ChangeLevel
 from schemaver.diffs.base import BaseDiff
-from schemaver.lookup import ChangeLevel, StringField
 
 if TYPE_CHECKING:
     from schemaver.changelog import Changelog
+
+
+class StringField(Enum):
+    """List of validation attributes for strings."""
+
+    # string types
+    MAX_LENGTH = "maxLength"
+    MIN_LENGTH = "minLength"
+    PATTERN = "pattern"
 
 
 class StringValidationDiff(BaseDiff):

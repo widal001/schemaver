@@ -2,13 +2,82 @@
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import TYPE_CHECKING
 
-from schemaver.changelog import Changelog, SchemaChange
-from schemaver.lookup import PROP_LOOKUP, DiffType, ObjectField, Required
+from schemaver.changelog import ChangeLevel, Changelog, SchemaChange
+from schemaver.diffs.object import ObjectField
 
 if TYPE_CHECKING:
     from schemaver.property import Property
+
+
+class Required(Enum):
+    """Indicate whether a property is required or optional."""
+
+    YES = "required"
+    NO = "optional"
+
+
+class DiffType(Enum):
+    """Indicate whether an attribute was added, removed, or modified."""
+
+    ADDED = "added"
+    REMOVED = "removed"
+    MODIFIED = "modified"
+
+
+class ExtraProps(Enum):
+    """Indicate whether additionalProps is allowed or not."""
+
+    ALLOWED = "allowed"
+    NOT_ALLOWED = "not allowed"
+    VALIDATED = "validated"
+
+
+# Uses the following inputs to determine the appropriate change level
+# - Diff type (i.e. property was ADDED vs REMOVED)
+# - Required status (i.e. property was/is REQUIRED vs OPTIONAL)
+# - Additional props (i.e. additional properties were/are ALLOWED vs BANNED)
+PROP_LOOKUP: dict[
+    DiffType,
+    dict[Required, dict[ExtraProps, ChangeLevel]],
+] = {
+    # When a property is added to an object
+    DiffType.ADDED: {
+        # Newly added prop is required
+        Required.YES: {
+            # additionalProps were previously allowed
+            ExtraProps.ALLOWED: ChangeLevel.REVISION,
+            # additionalProps were previously banned
+            ExtraProps.NOT_ALLOWED: ChangeLevel.MODEL,
+        },
+        # Newly added prop is optional
+        Required.NO: {
+            # additionalProps were previously allowed
+            ExtraProps.ALLOWED: ChangeLevel.REVISION,
+            # additionalProps were previously banned
+            ExtraProps.NOT_ALLOWED: ChangeLevel.ADDITION,
+        },
+    },
+    # When a property was removed from an object
+    DiffType.REMOVED: {
+        # Removed prop was required
+        Required.YES: {
+            # additionalProps are currently allowed
+            ExtraProps.ALLOWED: ChangeLevel.ADDITION,
+            # additional props are currently banned
+            ExtraProps.NOT_ALLOWED: ChangeLevel.MODEL,
+        },
+        # Removed prop was optional
+        Required.NO: {
+            # additionalProps are currently allowed
+            ExtraProps.ALLOWED: ChangeLevel.ADDITION,
+            # additionalProps are currently banned
+            ExtraProps.NOT_ALLOWED: ChangeLevel.REVISION,
+        },
+    },
+}
 
 
 class PropertyDiff:

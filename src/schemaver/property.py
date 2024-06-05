@@ -3,22 +3,31 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 from typing import TYPE_CHECKING
 
-from schemaver.diffs import (
-    ArrayValidationDiff,
-    BaseDiff,
-    CoreValidationDiff,
-    MetadataDiff,
-    NumericValidationDiff,
-    ObjectValidationDiff,
-    PropertyDiff,
-    StringValidationDiff,
-)
-from schemaver.lookup import CoreField, ExtraProps, InstanceType, ObjectField
+from schemaver.diffs.array import ArrayValidationDiff
+from schemaver.diffs.core import CoreField, CoreValidationDiff
+from schemaver.diffs.metadata import MetadataDiff
+from schemaver.diffs.numeric import NumericValidationDiff
+from schemaver.diffs.object import ObjectField, ObjectValidationDiff
+from schemaver.diffs.property import ExtraProps, PropertyDiff
+from schemaver.diffs.string import StringValidationDiff
 
 if TYPE_CHECKING:
     from schemaver.changelog import Changelog
+    from schemaver.diffs.base import BaseDiff
+
+
+class InstanceType(Enum):
+    """The instance type for a property."""
+
+    ARRAY = "array"
+    STRING = "string"
+    NUMBER = "number"
+    INTEGER = "integer"
+    OBJECT = "object"
+    ANY = None
 
 
 @dataclass

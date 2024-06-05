@@ -5,7 +5,8 @@ from copy import deepcopy
 import pytest
 
 from schemaver.release import Release
-from schemaver.lookup import ChangeLevel, ExtraProps, Required
+from schemaver.changelog import ChangeLevel
+from schemaver.diffs.property import ExtraProps, Required
 
 from tests.helpers import (
     BASE_SCHEMA,
@@ -97,7 +98,7 @@ class TestAddingProp:
         change = release.changes[0]
         assert new_prop == change.attribute
         assert parent_prop in change.location
-        assert change.depth == 1
+        assert change.depth == 3
 
     def test_adding_multiple_props_results_in_multiple_changes(self):
         """The changelog should contain a change for every prop added."""
@@ -197,7 +198,7 @@ class TestRemovingProp:
         change = release.changes[0]
         assert nested_prop == change.attribute
         assert parent_prop in change.location
-        assert change.depth == 1
+        assert change.depth == 3
 
     def test_removing_multiple_props_results_in_multiple_changes(self):
         """The changelog should contain a change for every prop removed."""

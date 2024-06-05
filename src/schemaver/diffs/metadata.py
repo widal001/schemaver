@@ -2,13 +2,26 @@
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import TYPE_CHECKING
 
+from schemaver.changelog import ChangeLevel
 from schemaver.diffs.base import BaseDiff
-from schemaver.lookup import ChangeLevel, MetadataField
 
 if TYPE_CHECKING:
     from schemaver.changelog import Changelog
+
+
+class MetadataField(Enum):
+    """List of supported metadata attributes."""
+
+    TITLE = "title"
+    DESCRIPTION = "description"
+    DEFAULT = "default"
+    DEPRECATED = "deprecated"
+    READ_ONLY = "readOnly"
+    WRITE_ONLY = "writeOnly"
+    EXAMPLES = "examples"
 
 
 class MetadataDiff(BaseDiff):

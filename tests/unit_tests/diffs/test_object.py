@@ -2,14 +2,12 @@
 
 import pytest
 
-from schemaver.lookup import (
-    ChangeLevel,
-    InstanceType,
-    ObjectField,
-    StringField,
-    ArrayField,
-)
-from schemaver.property import Property
+from schemaver.changelog import ChangeLevel
+
+from schemaver.property import InstanceType, Property
+from schemaver.diffs.object import ObjectField
+from schemaver.diffs.string import StringField
+from schemaver.diffs.array import ArrayField
 
 from tests.unit_tests.diffs.helpers import (
     assert_changes,

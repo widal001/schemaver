@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from schemaver.lookup import ChangeLevel
+from schemaver.changelog import ChangeLevel
 
 if TYPE_CHECKING:
     from schemaver.release import Release

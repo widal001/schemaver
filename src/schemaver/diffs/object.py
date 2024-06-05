@@ -2,13 +2,26 @@
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import TYPE_CHECKING
 
+from schemaver.changelog import ChangeLevel
 from schemaver.diffs.base import BaseDiff
-from schemaver.lookup import ChangeLevel, ObjectField
 
 if TYPE_CHECKING:
     from schemaver.changelog import Changelog
+
+
+class ObjectField(Enum):
+    """List of validation attributes for objects."""
+
+    # object types
+    PROPS = "properties"
+    MAX_PROPS = "maxProperties"
+    MIN_PROPS = "minProperties"
+    EXTRA_PROPS = "additionalProperties"
+    DEPENDENT_REQUIRED = "dependentRequired"
+    REQUIRED = "required"
 
 
 class ObjectValidationDiff(BaseDiff):

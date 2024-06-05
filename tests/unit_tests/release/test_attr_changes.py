@@ -4,15 +4,13 @@ from copy import deepcopy
 
 import pytest
 
-from schemaver.lookup import (
-    ChangeLevel,
-    MetadataField,
-    ArrayField,
-    CoreField,
-    ObjectField,
-    NumericField,
-    StringField,
-)
+from schemaver.changelog import ChangeLevel
+from schemaver.diffs.array import ArrayField
+from schemaver.diffs.core import CoreField
+from schemaver.diffs.numeric import NumericField
+from schemaver.diffs.metadata import MetadataField
+from schemaver.diffs.object import ObjectField
+from schemaver.diffs.string import StringField
 from schemaver.release import Release
 
 from tests.helpers import (

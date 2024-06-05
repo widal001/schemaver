@@ -2,13 +2,27 @@
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import TYPE_CHECKING
 
+from schemaver.changelog import ChangeLevel
 from schemaver.diffs.base import BaseDiff
-from schemaver.lookup import ArrayField, ChangeLevel
 
 if TYPE_CHECKING:
     from schemaver.changelog import Changelog
+
+
+class ArrayField(Enum):
+    """List of validations attributes for arrays."""
+
+    # array types
+    ITEMS = "items"
+    MAX_ITEMS = "maxItems"
+    MIN_ITEMS = "minItems"
+    CONTAINS = "contains"
+    UNIQUE_ITEMS = "uniqueItems"
+    MAX_CONTAINS = "maxContains"
+    MIN_CONTAINS = "minContains"
 
 
 MAX_FIELDS = {ArrayField.MAX_CONTAINS.value, ArrayField.MAX_ITEMS.value}

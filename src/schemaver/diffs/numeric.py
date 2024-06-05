@@ -2,13 +2,25 @@
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import TYPE_CHECKING
 
+from schemaver.changelog import ChangeLevel
 from schemaver.diffs.base import BaseDiff
-from schemaver.lookup import ChangeLevel, NumericField
 
 if TYPE_CHECKING:
     from schemaver.changelog import Changelog
+
+
+class NumericField(Enum):
+    """List of validation attributes for integers and numbers."""
+
+    # numeric types
+    MAX = "maximum"
+    MIN = "minimum"
+    EXCLUSIVE_MAX = "exclusiveMaximum"
+    EXCLUSIVE_MIN = "exclusiveMinimum"
+    MULTIPLE_OF = "multipleOf"
 
 
 MAX_FIELDS = {NumericField.EXCLUSIVE_MAX.value, NumericField.MAX.value}

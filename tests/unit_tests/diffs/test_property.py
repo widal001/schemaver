@@ -5,8 +5,8 @@ from pprint import pprint
 
 import pytest
 
-from schemaver.changelog import Changelog
-from schemaver.lookup import ChangeLevel, ExtraProps, Required
+from schemaver.changelog import ChangeLevel, Changelog
+from schemaver.diffs.property import ExtraProps, Required
 from schemaver.property import Property
 
 from tests.unit_tests.diffs.helpers import assert_changes
