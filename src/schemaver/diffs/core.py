@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from enum import Enum
 
-from schemaver.changelog import ChangeLevel, Changelog, SchemaChange
+from schemaver.changelog import ChangeLevel, Changelog
 from schemaver.diffs.base import BaseDiff
 
 
@@ -48,8 +48,8 @@ class CoreValidationDiff(BaseDiff):
         changelog: Changelog,
     ) -> None:
         """Record change for modifications to existing validation attributes."""
-        message = "Validation attribute '{attr}' was modified on '{loc}' "
-        message += f"from {self.old_schema.schema[attr]} to {self.old_schema.schema[attr]}"
+        # get the old and new values
+        message = self._format_changed_message(attr, "Core validation")
         # fmt: off
         level = (
             ChangeLevel.MODEL
@@ -59,19 +59,3 @@ class CoreValidationDiff(BaseDiff):
         # fmt: on
         change = self._record_change(attr, message, level)
         changelog.add(change)
-
-    def _record_change(
-        self,
-        attr: str,
-        message: str,
-        level: ChangeLevel,
-    ) -> SchemaChange:
-        """Categorize and record a change made to a property's attribute."""
-        context = self.new_schema.context
-        return SchemaChange(
-            level=level,
-            description=message.format(attr=attr, loc=context.location),
-            attribute=attr,
-            location=context.location,
-            depth=context.curr_depth,
-        )

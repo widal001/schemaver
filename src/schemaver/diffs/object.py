@@ -5,7 +5,6 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from schemaver.changelog import ChangeLevel
 from schemaver.diffs.base import BaseDiff
 
 if TYPE_CHECKING:
@@ -35,30 +34,13 @@ class ObjectValidationDiff(BaseDiff):
         changelog: Changelog,
     ) -> None:
         """Record change for modifications to existing validation attributes."""
-        # only proceed if max_props or min_props has changed
-        # other differences will be handled by PropertyDiff
-        max_field: str = ObjectField.MAX_PROPS.value
-        min_field: str = ObjectField.MIN_PROPS.value
-        if attr not in (max_field, min_field):
-            return
-        # get the old and new values
-        old_val = self.old_schema.schema[attr]
-        new_val = self.new_schema.schema[attr]
-        # prepare the changelog message
-        message = "Validation attribute '{attr}' was modified on '{loc}' "
-        message += f"from {old_val} to {new_val}"
-        # set the change level
-        value_increased = new_val > old_val
-        if attr == max_field and value_increased:
-            # raising a maximum is an ADDITION
-            level = ChangeLevel.ADDITION
-        elif attr == min_field and not value_increased:
-            # lowering a MIN is an ADDITION
-            level = ChangeLevel.ADDITION
-        else:
-            level = ChangeLevel.REVISION
-        change = self._record_change(attr, message, level)
-        changelog.add(change)
+        self._record_max_and_min_changes(
+            attr=attr,
+            max_fields={ObjectField.MAX_PROPS.value},
+            min_fields={ObjectField.MIN_PROPS.value},
+            attr_type="Object validation",
+            changelog=changelog,
+        )
 
     @property
     def properties_have_changed(self) -> bool:

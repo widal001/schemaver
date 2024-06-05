@@ -84,3 +84,43 @@ class BaseDiff:
             location=context.location,
             depth=context.curr_depth,
         )
+
+    def _format_changed_message(self, attr: str, attr_type: str) -> str:
+        # get the old and new values
+        old_val = self.old_schema.schema[attr]
+        new_val = self.new_schema.schema[attr]
+        loc = self.new_schema.context.location
+        # prepare the changelog message
+        message = f"{attr_type} attribute '{attr}' was modified on '{loc}' "
+        message += f"from '{old_val}' to '{new_val}'"
+        return message
+
+    def _record_max_and_min_changes(  # noqa: PLR0913 # pylint: disable=R0913
+        self,
+        attr: str,
+        max_fields: set[str],
+        min_fields: set[str],
+        attr_type: str,
+        changelog: Changelog,
+    ) -> None:
+        """Record changes to max and min validation attributes (e.g. maxLength)."""
+        # only proceed if attr is one of the max or min fields
+        if attr not in (*max_fields, *min_fields):
+            return
+        # prepare the changelog message
+        message = self._format_changed_message(attr, attr_type)
+        # get the old and new values
+        old_val = self.old_schema.schema[attr]
+        new_val = self.new_schema.schema[attr]
+        value_increased = new_val > old_val
+        # set the change level
+        if attr in max_fields and value_increased:
+            # raising a maximum is an ADDITION
+            level = ChangeLevel.ADDITION
+        elif attr in min_fields and not value_increased:
+            # lowering a MIN is an ADDITION
+            level = ChangeLevel.ADDITION
+        else:
+            level = ChangeLevel.REVISION
+        change = self._record_change(attr, message, level)
+        changelog.add(change)

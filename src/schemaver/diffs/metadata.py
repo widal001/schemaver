@@ -52,7 +52,7 @@ class MetadataDiff(BaseDiff):
         attr: str,
         changelog: Changelog,
     ) -> None:
-        message = "Metadata attribute '{attr}' was modified on '{loc}' "
-        message += f"from {self.old_schema.schema[attr]} to {self.new_schema.schema[attr]}"
+        """Record changes to existing metadata."""
+        message = self._format_changed_message(attr, "Metadata")
         change = self._record_change(attr, message, ChangeLevel.ADDITION)
         changelog.add(change)
