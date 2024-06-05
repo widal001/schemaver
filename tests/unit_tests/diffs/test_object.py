@@ -27,7 +27,6 @@ SCHEMA_WITH_PROPS = {
 EXAMPLES = [
     (ObjectField.MAX_PROPS.value, 10, BASE_SCHEMA),
     (ObjectField.MIN_PROPS.value, 10, BASE_SCHEMA),
-    (ObjectField.REQUIRED.value, ["foo"], SCHEMA_WITH_PROPS),
     (ObjectField.EXTRA_PROPS.value, False, SCHEMA_WITH_PROPS),
     (ObjectField.DEPENDENT_REQUIRED.value, 10, BASE_SCHEMA),
 ]
@@ -165,7 +164,3 @@ class TestDiffNumeric:
         setup.new_schema.diff(setup.old_schema, setup.changelog)
         # assert
         assert_changes(got=setup.changelog, wanted={ChangeLevel.ADDITION: 1})
-
-
-class TestNestedDiff:
-    """Test recording changes made to an object's nested properties."""

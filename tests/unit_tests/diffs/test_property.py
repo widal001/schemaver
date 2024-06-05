@@ -22,7 +22,7 @@ BASE_SCHEMA = {
         PROP_NAME: {"type": "string"},
         PROP_OBJECT: {"type": "object", "properties": {}},
     },
-    "required": [PROP_ID],
+    "required": [PROP_ID, PROP_NAME],
     "additionalProperties": False,
 }
 
@@ -179,3 +179,42 @@ class TestRemovingProp:
         change = self.changelog[0]
         assert PROP_OBJECT in change.location
         assert change.depth == 3
+
+
+class TestChangingPropStatus:
+    """Test switching a prop from required to optional or vice versa."""
+
+    def test_making_prop_optional_logs_an_addition(self):
+        """Making a required prop optional should log an addition-level change."""
+        # arrange - make productId optional
+        old = deepcopy(BASE_SCHEMA)
+        new = deepcopy(old)
+        del new["required"][0]
+        assert PROP_ID not in new["required"]
+        # arrange - init schemas
+        old_schema = Property(old)
+        new_schema = Property(new)
+        changelog = Changelog()
+        # act
+        new_schema.diff(old_schema, changelog)
+        # assert
+        assert_changes(got=changelog, wanted={ChangeLevel.ADDITION: 1})
+        assert changelog[0].attribute == PROP_ID
+
+    def test_making_a_prop_required_logs_a_revision(self):
+        """Making an optional prop required should log a revision-level change."""
+        # arrange - make productId optional
+        old = deepcopy(BASE_SCHEMA)
+        new = deepcopy(old)
+        new["required"].append(PROP_OBJECT)
+        assert PROP_OBJECT in new["required"]
+        assert PROP_OBJECT in new["properties"]
+        # arrange - init schemas
+        old_schema = Property(old)
+        new_schema = Property(new)
+        changelog = Changelog()
+        # act
+        new_schema.diff(old_schema, changelog)
+        # assert
+        assert_changes(got=changelog, wanted={ChangeLevel.REVISION: 1})
+        assert changelog[0].attribute == PROP_OBJECT

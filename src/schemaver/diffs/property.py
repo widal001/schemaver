@@ -169,4 +169,38 @@ class PropertyDiff:
         # record changes for OPTIONAL props that were REMOVED
         for prop in self.removed - required_before:
             record_change(prop, DiffType.REMOVED, Required.NO)
+        # record properties that went from optional to required, or vice versa
+        self._record_changes_to_required_status(changelog)
         return changelog
+
+    def _record_changes_to_required_status(
+        self,
+        changelog: Changelog,
+    ) -> None:
+        """Log when properties were changed from required to optional."""
+
+        def record_change(message: str, level: ChangeLevel) -> None:
+            """Add a change to the changelog."""
+            change = SchemaChange(
+                level=level,
+                description=message,
+                attribute=prop,
+                depth=context.curr_depth,
+                location=context.location,
+            )
+            changelog.add(change)
+
+        # get current and former required props
+        context = self.new_schema.context
+        required_now = self.changed & self.new_schema.required_props
+        required_before = self.changed & self.old_schema.required_props
+        # record REQUIRED to OPTIONAL changes as an ADDITION
+        for prop in required_before - required_now:
+            message = f"Property {prop} at {context.location}"
+            message += "was changed from required to optional."
+            record_change(message=message, level=ChangeLevel.ADDITION)
+        # record OPTIONAL to REQUIRED changes as a REVISION
+        for prop in required_now - required_before:
+            message = f"Property {prop} at {context.location}"
+            message += "was changed from optional to required."
+            record_change(message=message, level=ChangeLevel.REVISION)
