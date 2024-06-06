@@ -2,7 +2,7 @@
 
 import pytest
 
-from schemaver.lookup import ChangeLevel
+from schemaver.changelog import ChangeLevel
 from schemaver.version import Version
 
 BASE_MODEL = 1

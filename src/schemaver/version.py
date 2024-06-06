@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from copy import deepcopy
 
-from schemaver.lookup import ChangeLevel
+from schemaver.changelog import ChangeLevel
 
 
 class Version:

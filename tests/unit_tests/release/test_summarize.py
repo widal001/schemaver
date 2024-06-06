@@ -5,7 +5,7 @@ from copy import deepcopy
 
 import pytest
 
-from schemaver.lookup import ChangeLevel
+from schemaver.changelog import ChangeLevel
 from schemaver.release import Release
 
 from tests.helpers import BASE_SCHEMA, BASE_VERSION, PROP_ARRAY

@@ -4,3 +4,8 @@ source =
     tests
 omit =
   env/
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if TYPE_CHECKING:

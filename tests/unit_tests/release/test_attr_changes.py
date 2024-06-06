@@ -4,7 +4,13 @@ from copy import deepcopy
 
 import pytest
 
-from schemaver.lookup import ChangeLevel, MetadataField, ValidationField
+from schemaver.changelog import ChangeLevel
+from schemaver.diffs.array import ArrayField
+from schemaver.diffs.core import CoreField
+from schemaver.diffs.numeric import NumericField
+from schemaver.diffs.metadata import MetadataField
+from schemaver.diffs.object import ObjectField
+from schemaver.diffs.string import StringField
 from schemaver.release import Release
 
 from tests.helpers import (
@@ -23,34 +29,34 @@ class TestChangingValidation:
     """Test adding, removing, and modifying validations."""
 
     VALIDATION_EXAMPLES = (
-        (PROP_ANY, ValidationField.TYPE.value, "string"),
-        (PROP_ANY, ValidationField.ENUM.value, ["foo", "bar"]),
-        (PROP_ANY, ValidationField.FORMAT.value, "email"),
+        (PROP_ANY, CoreField.TYPE.value, "string"),
+        (PROP_ANY, CoreField.ENUM.value, ["foo", "bar"]),
+        (PROP_ANY, CoreField.FORMAT.value, "email"),
         # array types
-        (PROP_ARRAY, ValidationField.ITEMS.value, {"type": "string"}),
-        (PROP_ARRAY, ValidationField.MAX_ITEMS.value, 10),
-        (PROP_ARRAY, ValidationField.MIN_ITEMS.value, 10),
-        (PROP_ARRAY, ValidationField.CONTAINS.value, {"type": "string"}),
-        (PROP_ARRAY, ValidationField.UNIQUE_ITEMS.value, True),
-        (PROP_ARRAY, ValidationField.MAX_CONTAINS.value, 10),
-        (PROP_ARRAY, ValidationField.MIN_CONTAINS.value, 10),
+        (PROP_ARRAY, ArrayField.ITEMS.value, {"type": "string"}),
+        (PROP_ARRAY, ArrayField.MAX_ITEMS.value, 10),
+        (PROP_ARRAY, ArrayField.MIN_ITEMS.value, 10),
+        (PROP_ARRAY, ArrayField.CONTAINS.value, {"type": "string"}),
+        (PROP_ARRAY, ArrayField.UNIQUE_ITEMS.value, True),
+        (PROP_ARRAY, ArrayField.MAX_CONTAINS.value, 10),
+        (PROP_ARRAY, ArrayField.MIN_CONTAINS.value, 10),
         # object types
-        (PROP_OBJECT, ValidationField.PROPS.value, {"type": "string"}),
-        (PROP_OBJECT, ValidationField.MAX_PROPS.value, 10),
-        (PROP_OBJECT, ValidationField.MIN_PROPS.value, 10),
-        (PROP_OBJECT, ValidationField.EXTRA_PROPS.value, False),
-        (PROP_OBJECT, ValidationField.DEPENDENT_REQUIRED.value, True),
-        (PROP_OBJECT, ValidationField.REQUIRED.value, ["foo"]),
+        (PROP_OBJECT, ObjectField.PROPS.value, {"type": "string"}),
+        (PROP_OBJECT, ObjectField.MAX_PROPS.value, 10),
+        (PROP_OBJECT, ObjectField.MIN_PROPS.value, 10),
+        (PROP_OBJECT, ObjectField.EXTRA_PROPS.value, False),
+        (PROP_OBJECT, ObjectField.DEPENDENT_REQUIRED.value, True),
+        (PROP_OBJECT, ObjectField.REQUIRED.value, ["foo"]),
         # numeric types
-        (PROP_INT, ValidationField.MULTIPLE_OF.value, 10),
-        (PROP_INT, ValidationField.MAX.value, 10),
-        (PROP_INT, ValidationField.EXCLUSIVE_MAX.value, 10),
-        (PROP_INT, ValidationField.MIN.value, 10),
-        (PROP_INT, ValidationField.EXCLUSIVE_MIN.value, 10),
+        (PROP_INT, NumericField.MULTIPLE_OF.value, 10),
+        (PROP_INT, NumericField.MAX.value, 10),
+        (PROP_INT, NumericField.EXCLUSIVE_MAX.value, 10),
+        (PROP_INT, NumericField.MIN.value, 10),
+        (PROP_INT, NumericField.EXCLUSIVE_MIN.value, 10),
         # string types
-        (PROP_STRING, ValidationField.MAX_LENGTH.value, 10),
-        (PROP_STRING, ValidationField.MIN_LENGTH.value, 10),
-        (PROP_STRING, ValidationField.PATTERN.value, "[A-z]+"),
+        (PROP_STRING, StringField.MAX_LENGTH.value, 10),
+        (PROP_STRING, StringField.MIN_LENGTH.value, 10),
+        (PROP_STRING, StringField.PATTERN.value, "[A-z]+"),
     )
 
     @pytest.mark.parametrize(("prop", "attr", "value"), VALIDATION_EXAMPLES)
@@ -97,6 +103,78 @@ class TestChangingValidation:
         new = deepcopy(BASE_SCHEMA)
         old = deepcopy(new)
         old["properties"][prop][attr] = value
+        # act
+        release = Release(
+            new_schema=new,
+            old_schema=old,
+            old_version=BASE_VERSION,
+        )
+        # assert
+        assert_release_level(got=release, wanted=ChangeLevel.ADDITION)
+
+    @pytest.mark.parametrize(
+        ("prop", "attr", "value"),
+        [
+            # array types
+            (PROP_ARRAY, ArrayField.MAX_ITEMS.value, 10),
+            (PROP_ARRAY, ArrayField.MAX_CONTAINS.value, 10),
+            # object types
+            (PROP_OBJECT, ObjectField.MAX_PROPS.value, 10),
+            # numeric types
+            (PROP_INT, NumericField.MAX.value, 10),
+            (PROP_INT, NumericField.EXCLUSIVE_MAX.value, 10),
+            # string types
+            (PROP_STRING, StringField.MAX_LENGTH.value, 10),
+        ],
+    )
+    def test_decreasing_max_validation_should_result_in_revision(
+        self,
+        prop: str,
+        attr: str,
+        value: int,
+    ):
+        """DECREASING the max should result in a new REVISION."""
+        # arrange
+        old = deepcopy(BASE_SCHEMA)
+        old["properties"][prop][attr] = value
+        new = deepcopy(old)
+        new["properties"][prop][attr] -= 5
+        # act
+        release = Release(
+            new_schema=new,
+            old_schema=old,
+            old_version=BASE_VERSION,
+        )
+        # assert
+        assert_release_level(got=release, wanted=ChangeLevel.REVISION)
+
+    @pytest.mark.parametrize(
+        ("prop", "attr", "value"),
+        [
+            # array types
+            (PROP_ARRAY, ArrayField.MAX_ITEMS.value, 10),
+            (PROP_ARRAY, ArrayField.MAX_CONTAINS.value, 10),
+            # object types
+            (PROP_OBJECT, ObjectField.MAX_PROPS.value, 10),
+            # numeric types
+            (PROP_INT, NumericField.MAX.value, 10),
+            (PROP_INT, NumericField.EXCLUSIVE_MAX.value, 10),
+            # string types
+            (PROP_STRING, StringField.MAX_LENGTH.value, 10),
+        ],
+    )
+    def test_increasing_max_validation_should_result_in_addition(
+        self,
+        prop: str,
+        attr: str,
+        value: int,
+    ):
+        """INCREASING the max should result in a new ADDITION."""
+        # arrange
+        old = deepcopy(BASE_SCHEMA)
+        old["properties"][prop][attr] = value
+        new = deepcopy(old)
+        new["properties"][prop][attr] += 5
         # act
         release = Release(
             new_schema=new,
