@@ -9,7 +9,7 @@ from schemaver.changelog import ChangeLevel, Changelog, SchemaChange
 from schemaver.diffs.object import ObjectField
 
 if TYPE_CHECKING:
-    from schemaver.property import Property
+    from schemaver.schema import Schema
 
 
 class Required(Enum):
@@ -32,7 +32,7 @@ class ExtraProps(Enum):
 
     ALLOWED = "allowed"
     NOT_ALLOWED = "not allowed"
-    VALIDATED = "validated"
+    RESTRICTED = "restricted"
 
 
 # Uses the following inputs to determine the appropriate change level
@@ -83,13 +83,13 @@ PROP_LOOKUP: dict[
 class PropertyDiff:
     """List the props added, removed, or changed grouped by required status."""
 
-    new_schema: Property
-    old_schema: Property
+    new_schema: Schema
+    old_schema: Schema
     added: set[str]
     removed: set[str]
     changed: set[str]
 
-    def __init__(self, new_schema: Property, old_schema: Property) -> None:
+    def __init__(self, new_schema: Schema, old_schema: Schema) -> None:
         """Initialize the PropertyDiff."""
         # save new and old schemas for later access
         self.new_schema = new_schema

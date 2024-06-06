@@ -8,7 +8,7 @@ from schemaver.changelog import ChangeLevel, Changelog
 from schemaver.diffs.array import ArrayField
 from schemaver.diffs.string import StringField
 from schemaver.diffs.numeric import NumericField
-from schemaver.property import InstanceType, Property
+from schemaver.schema import InstanceType, Schema
 
 from tests.unit_tests.diffs.helpers import (
     assert_changes,
@@ -46,7 +46,7 @@ class TestDiffNumeric:
     def test_init_schema(self, schema: dict, kind: InstanceType):
         """Property class correctly initializes when type is 'integer'."""
         # act
-        parsed_schema = Property(schema)
+        parsed_schema = Schema(schema)
         # assert
         assert parsed_schema.kind == kind
 
@@ -194,8 +194,8 @@ class TestRecordNestedChanges:
         new = deepcopy(old)
         new["properties"][prop][attr] = 10  # validation only on new schema
         # arrange - create schemas
-        old_schema = Property(old)
-        new_schema = Property(new)
+        old_schema = Schema(old)
+        new_schema = Schema(new)
         changelog = Changelog()
         # act
         new_schema.diff(old_schema, changelog)
@@ -215,8 +215,8 @@ class TestRecordNestedChanges:
         new = deepcopy(old)
         old["properties"][prop][attr] = 5  # validation only on old schema
         # arrange - create schemas
-        old_schema = Property(old)
-        new_schema = Property(new)
+        old_schema = Schema(old)
+        new_schema = Schema(new)
         changelog = Changelog()
         # act
         new_schema.diff(old_schema, changelog)
@@ -239,8 +239,8 @@ class TestRecordNestedChanges:
         old["properties"][prop][old_attr] = 5  # only on old
         new["properties"][prop][new_attr] = 10  # only on new
         # arrange - create schemas
-        new_schema = Property(old)
-        old_schema = Property(new)
+        new_schema = Schema(old)
+        old_schema = Schema(new)
         changelog = Changelog()
         # act
         new_schema.diff(old_schema, changelog)

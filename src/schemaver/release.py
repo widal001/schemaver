@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from schemaver.changelog import Changelog
-from schemaver.property import Property
+from schemaver.schema import Schema
 from schemaver.version import Version
 
 if TYPE_CHECKING:
@@ -31,8 +31,8 @@ class Release:
         """Compare two schemas and create a release with the correct SchemaVer and Changelog."""
         self.new_schema = new_schema
         self.old_schema = old_schema
-        schema_now = Property(new_schema)
-        schema_before = Property(old_schema)
+        schema_now = Schema(new_schema)
+        schema_before = Schema(old_schema)
         self.changes = schema_now.diff(
             old=schema_before,
             changelog=Changelog(),

@@ -1,1 +1,1 @@
-"""Test the property sub-package."""
+"""Test the diffs sub-package."""

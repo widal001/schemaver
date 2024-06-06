@@ -1,4 +1,4 @@
-"""Test the Release class when a schema adds, removes, or modifies property attributes."""
+"""Test the Release class when a schema adds, removes, or modifies attributes."""
 
 from copy import deepcopy
 

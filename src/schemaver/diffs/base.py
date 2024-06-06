@@ -9,7 +9,7 @@ from schemaver.changelog import ChangeLevel, Changelog, SchemaChange
 if TYPE_CHECKING:
     from enum import Enum
 
-    from schemaver.property import Property
+    from schemaver.schema import Schema
 
 
 class BaseDiff:
@@ -23,7 +23,7 @@ class BaseDiff:
     removed: set[str]
     changed: set[str]
 
-    def __init__(self, new_schema: Property, old_schema: Property) -> None:
+    def __init__(self, new_schema: Schema, old_schema: Schema) -> None:
         """Initialize the CoreFieldsDiff."""
         # save new and old schemas for later access
         self.new_schema = new_schema
