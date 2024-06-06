@@ -7,7 +7,7 @@ import pytest
 
 from schemaver.changelog import ChangeLevel, Changelog
 from schemaver.diffs.property import ExtraProps, Required
-from schemaver.schema import Property
+from schemaver.schema import Schema
 
 from tests.unit_tests.diffs.helpers import assert_changes
 
@@ -30,8 +30,8 @@ BASE_SCHEMA = {
 class TestAddingProp:
     """Test result when adding a prop to the new schema."""
 
-    old_schema: Property
-    new_schema: Property
+    old_schema: Schema
+    new_schema: Schema
     changelog: Changelog
 
     def arrange_schemas(
@@ -62,8 +62,8 @@ class TestAddingProp:
         print("New schema:")
         pprint(new)
         # Set values for use in tests
-        self.new_schema = Property(new)
-        self.old_schema = Property(old)
+        self.new_schema = Schema(new)
+        self.old_schema = Schema(old)
         self.changelog = Changelog()
 
     # fmt: off
@@ -107,8 +107,8 @@ class TestAddingProp:
 class TestRemovingProp:
     """Test result when removing a prop from the old schema."""
 
-    old_schema: Property
-    new_schema: Property
+    old_schema: Schema
+    new_schema: Schema
     changelog: Changelog
 
     def arrange_schemas(
@@ -139,8 +139,8 @@ class TestRemovingProp:
         print("New schema:")
         pprint(new)
         # Set values for use in tests
-        self.new_schema = Property(new)
-        self.old_schema = Property(old)
+        self.new_schema = Schema(new)
+        self.old_schema = Schema(old)
         self.changelog = Changelog()
 
     # fmt: off
@@ -192,8 +192,8 @@ class TestChangingPropStatus:
         del new["required"][0]
         assert PROP_ID not in new["required"]
         # arrange - init schemas
-        old_schema = Property(old)
-        new_schema = Property(new)
+        old_schema = Schema(old)
+        new_schema = Schema(new)
         changelog = Changelog()
         # act
         new_schema.diff(old_schema, changelog)
@@ -210,8 +210,8 @@ class TestChangingPropStatus:
         assert PROP_OBJECT in new["required"]
         assert PROP_OBJECT in new["properties"]
         # arrange - init schemas
-        old_schema = Property(old)
-        new_schema = Property(new)
+        old_schema = Schema(old)
+        new_schema = Schema(new)
         changelog = Changelog()
         # act
         new_schema.diff(old_schema, changelog)

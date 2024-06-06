@@ -6,7 +6,7 @@ from schemaver.changelog import ChangeLevel
 from schemaver.diffs.core import CoreField
 from schemaver.diffs.string import StringField
 from schemaver.diffs.numeric import NumericField
-from schemaver.schema import InstanceType, Property
+from schemaver.schema import InstanceType, Schema
 
 from tests.unit_tests.diffs.helpers import (
     assert_changes,
@@ -30,7 +30,7 @@ class TestDiffCore:
     def test_init_string(self):
         """Property class correctly initializes when type is 'integer'."""
         # act
-        prop = Property(BASE_SCHEMA)
+        prop = Schema(BASE_SCHEMA)
         # assert
         assert prop.kind == InstanceType.ANY
 

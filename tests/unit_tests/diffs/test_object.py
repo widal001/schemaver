@@ -4,7 +4,7 @@ import pytest
 
 from schemaver.changelog import ChangeLevel
 
-from schemaver.schema import InstanceType, Property
+from schemaver.schema import InstanceType, Schema
 from schemaver.diffs.object import ObjectField
 from schemaver.diffs.string import StringField
 from schemaver.diffs.array import ArrayField
@@ -45,7 +45,7 @@ class TestDiffNumeric:
     def test_init_schema(self, schema: dict, kind: InstanceType):
         """Property class correctly initializes when type is 'integer'."""
         # act
-        parsed_schema = Property(schema)
+        parsed_schema = Schema(schema)
         # assert
         assert parsed_schema.kind == kind
 

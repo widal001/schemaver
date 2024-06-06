@@ -40,7 +40,7 @@ class SchemaContext:
     extra_props: ExtraProps = ExtraProps.NOT_ALLOWED
 
 
-class Property:
+class Schema:
     """Track schema changes common to all instance types."""
 
     kind: InstanceType
@@ -57,7 +57,7 @@ class Property:
         self.schema = schema
         self.context = context or SchemaContext()
 
-    def diff(self, old: Property, changelog: Changelog) -> Changelog:
+    def diff(self, old: Schema, changelog: Changelog) -> Changelog:
         """Record the differences between this property and an older version."""
         # Diff the metadata
         metadata_diff = MetadataDiff(old_schema=old, new_schema=self)
@@ -108,7 +108,7 @@ class Property:
 
     def _log_diff(
         self,
-        old: Property,
+        old: Schema,
         changelog: Changelog,
         diff_cls: type[BaseDiff],
     ) -> Changelog:
@@ -117,7 +117,7 @@ class Property:
         diff.populate_changelog(changelog)
         return changelog
 
-    def _diff_object(self, old: Property, changelog: Changelog) -> Changelog:
+    def _diff_object(self, old: Schema, changelog: Changelog) -> Changelog:
         """Log the diff between two different objects."""
         # diff the object's validation attributes
         object_diff = ObjectValidationDiff(old_schema=old, new_schema=self)
@@ -126,7 +126,7 @@ class Property:
             return changelog
         # update the context then diff the properties
         for schema in [self, old]:
-            schema: Property  # type: ignore[no-redef]
+            schema: Schema  # type: ignore[no-redef]
             schema.context.curr_depth += 1
             schema.context.location += ".properties"
             schema.context.extra_props = self.extra_props
@@ -141,7 +141,7 @@ class Property:
         return changelog
 
     @classmethod
-    def _init_sub_schema(cls, parent: Property, prop: str) -> Property:
+    def _init_sub_schema(cls, parent: Schema, prop: str) -> Schema:
         """Init a new sub-schema from a parent schema."""
         context = SchemaContext(
             location=f"{parent.context.location}.{prop}",

@@ -4,7 +4,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 
 from schemaver.changelog import Changelog, ChangeLevel
-from schemaver.schema import Property
+from schemaver.schema import Schema
 
 
 def assert_changes(got: Changelog, wanted: dict[ChangeLevel, int]):
@@ -24,8 +24,8 @@ def assert_changes(got: Changelog, wanted: dict[ChangeLevel, int]):
 class TestSetup:
     """The elements needed to set up a test."""
 
-    old_schema: Property
-    new_schema: Property
+    old_schema: Schema
+    new_schema: Schema
     changelog: Changelog
 
 
@@ -44,8 +44,8 @@ def arrange_add_attribute(
     print("New", new)
     return TestSetup(
         changelog=Changelog(),
-        old_schema=Property(old),
-        new_schema=Property(new),
+        old_schema=Schema(old),
+        new_schema=Schema(new),
     )
 
 
@@ -64,8 +64,8 @@ def arrange_remove_attribute(
     # arrange - create properties and changelog
     return TestSetup(
         changelog=Changelog(),
-        old_schema=Property(old),
-        new_schema=Property(new),
+        old_schema=Schema(old),
+        new_schema=Schema(new),
     )
 
 
@@ -86,6 +86,6 @@ def arrange_change_attribute(
     # arrange - create properties and changelog
     return TestSetup(
         changelog=Changelog(),
-        old_schema=Property(old),
-        new_schema=Property(new),
+        old_schema=Schema(old),
+        new_schema=Schema(new),
     )
