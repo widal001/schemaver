@@ -4,7 +4,7 @@ from typing import Annotated
 
 import typer
 
-from schemaver import release, schema
+from schemaver import release, utils
 
 # instantiate the main CLI entrypoint
 app = typer.Typer()
@@ -33,15 +33,15 @@ def compare_schemas(
     """Compare two JSON schemas and generate a release summary."""
     # Try to load the old schema
     try:
-        old_schema = schema.load_json_string_or_path(old)
-    except schema.InvalidJsonSchemaError:
+        old_schema = utils.load_json_string_or_path(old)
+    except utils.InvalidJsonSchemaError:
         msg = "Value passed to --old is not valid JSON or path to valid JSON file."
         typer.echo(msg)
         raise typer.Exit(code=1) from None
     # Try to load the new schema
     try:
-        new_schema = schema.load_json_string_or_path(new)
-    except schema.InvalidJsonSchemaError:
+        new_schema = utils.load_json_string_or_path(new)
+    except utils.InvalidJsonSchemaError:
         msg = "Value passed to --new is not valid JSON or path to valid JSON file."
         typer.echo(msg)
         raise typer.Exit(code=1) from None
