@@ -32,7 +32,7 @@ class ExtraProps(Enum):
 
     ALLOWED = "allowed"
     NOT_ALLOWED = "not allowed"
-    VALIDATED = "validated"
+    RESTRICTED = "restricted"
 
 
 # Uses the following inputs to determine the appropriate change level

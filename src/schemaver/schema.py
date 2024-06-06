@@ -1,4 +1,4 @@
-"""Track schema changes for a given property."""
+"""Track schema changes for a given schema."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 class InstanceType(Enum):
-    """The instance type for a property."""
+    """The instance type for a schema."""
 
     ARRAY = "array"
     STRING = "string"
@@ -58,7 +58,7 @@ class Schema:
         self.context = context or SchemaContext()
 
     def diff(self, old: Schema, changelog: Changelog) -> Changelog:
-        """Record the differences between this property and an older version."""
+        """Record the differences between this schema and an older version."""
         # Diff the metadata
         metadata_diff = MetadataDiff(old_schema=old, new_schema=self)
         metadata_diff.populate_changelog(changelog)
@@ -91,7 +91,7 @@ class Schema:
 
     @property
     def extra_props(self) -> ExtraProps:
-        """The set of required properties for this schema."""
+        """Whether or not additional properties are allowed."""
         # if the instance type is not an object
         # return the value of extra_props from the current context
         if self.kind != InstanceType.OBJECT:
@@ -104,7 +104,7 @@ class Schema:
         if extra_props is False:
             return ExtraProps.NOT_ALLOWED
         # if 'additionalProps' is a non-boolean value, extra props are restricted
-        return ExtraProps.VALIDATED
+        return ExtraProps.RESTRICTED
 
     def _log_diff(
         self,
