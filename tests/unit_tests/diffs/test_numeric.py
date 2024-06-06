@@ -1,8 +1,10 @@
 """Test recording the diff between numeric instance types."""
 
+from copy import deepcopy
+
 import pytest
 
-from schemaver.changelog import ChangeLevel
+from schemaver.changelog import ChangeLevel, Changelog
 from schemaver.diffs.array import ArrayField
 from schemaver.diffs.string import StringField
 from schemaver.diffs.numeric import NumericField
@@ -24,6 +26,11 @@ VALIDATION_CHANGES = [
     (NumericField.EXCLUSIVE_MIN.value, 10),
     (NumericField.MULTIPLE_OF.value, 10),
 ]
+
+
+def create_sub_schema(prop: str):
+    """Create a schema with an integer sub-schema."""
+    return {"type": "object", "properties": {prop: {**BASE_INTEGER}}}
 
 
 class TestDiffNumeric:
@@ -173,3 +180,70 @@ class TestDiffNumeric:
         setup.new_schema.diff(setup.old_schema, setup.changelog)
         # assert
         assert_changes(got=setup.changelog, wanted={ChangeLevel.ADDITION: 1})
+
+
+class TestRecordNestedChanges:
+    """Test recording changes to nested numeric types."""
+
+    def test_adding_validation_to_sub_schema_logs_revision(self):
+        """Adding validation attribute to a sub schema logs a revision-level change."""
+        # arrange - create new and old schemas
+        prop = "foo"
+        attr = NumericField.MAX.value
+        old = create_sub_schema(prop)
+        new = deepcopy(old)
+        new["properties"][prop][attr] = 10  # validation only on new schema
+        # arrange - create schemas
+        old_schema = Property(old)
+        new_schema = Property(new)
+        changelog = Changelog()
+        # act
+        new_schema.diff(old_schema, changelog)
+        # assert
+        change = changelog[0]
+        assert change.level == ChangeLevel.REVISION
+        assert change.attribute == attr
+        assert prop in change.location
+        assert change.depth > 1
+
+    def test_removing_validation_from_sub_schema_logs_addition(self):
+        """Removing validation attribute from a sub schema logs an addition-level change."""
+        # arrange - create new and old schemas
+        prop = "foo"
+        attr = NumericField.MAX.value
+        old = create_sub_schema(prop)
+        new = deepcopy(old)
+        old["properties"][prop][attr] = 5  # validation only on old schema
+        # arrange - create schemas
+        old_schema = Property(old)
+        new_schema = Property(new)
+        changelog = Changelog()
+        # act
+        new_schema.diff(old_schema, changelog)
+        # assert
+        change = changelog[0]
+        assert change.level == ChangeLevel.ADDITION
+        assert change.attribute == attr
+        assert prop in change.location
+        assert change.depth > 1
+
+    def test_changing_multiple_attributes_in_a_sub_schema(self):
+        """All of the changes in a sub-schema should be detected."""
+        # arrange - create new and old schemas
+        prop = "foo"
+        old = create_sub_schema(prop)
+        new = deepcopy(old)
+        old_attr = NumericField.MIN.value
+        new_attr = NumericField.MAX.value
+        # arrange - add validations to the new and old schemas
+        old["properties"][prop][old_attr] = 5  # only on old
+        new["properties"][prop][new_attr] = 10  # only on new
+        # arrange - create schemas
+        new_schema = Property(old)
+        old_schema = Property(new)
+        changelog = Changelog()
+        # act
+        new_schema.diff(old_schema, changelog)
+        # assert
+        assert len(changelog) == 2
+        assert {old_attr, new_attr} == {c.attribute for c in changelog}

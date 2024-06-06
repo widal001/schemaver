@@ -40,6 +40,8 @@ def arrange_add_attribute(
     new: dict = deepcopy(old)
     new[attr] = value
     # arrange - create properties and changelog
+    print("Old", old)
+    print("New", new)
     return TestSetup(
         changelog=Changelog(),
         old_schema=Property(old),
@@ -53,10 +55,12 @@ def arrange_remove_attribute(
     value: str | int | list | dict,
 ) -> TestSetup:
     """Remove an attribute from the old schema."""
-    # arrange - add validation to the new schema
+    # arrange - add validation to the old schema but not the new one
     new: dict = deepcopy(base)
     old: dict = deepcopy(new)
     old[attr] = value
+    print("Old", old)
+    print("New", new)
     # arrange - create properties and changelog
     return TestSetup(
         changelog=Changelog(),
@@ -72,11 +76,13 @@ def arrange_change_attribute(
     new_val: str | int | list | dict,
 ) -> TestSetup:
     """Change the value of an attribute in the old schema."""
-    # arrange - add validation to the new schema
+    # arrange - add the appropriate validations to the new and old schema
     old: dict = deepcopy(base)
     new: dict = deepcopy(old)
     old[attr] = old_val
     new[attr] = new_val
+    print("Old", old)
+    print("New", new)
     # arrange - create properties and changelog
     return TestSetup(
         changelog=Changelog(),

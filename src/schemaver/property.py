@@ -137,7 +137,7 @@ class Property:
         for prop in prop_diff.changed:
             new_sub = self._init_sub_schema(self, prop)
             old_sub = self._init_sub_schema(old, prop)
-            return new_sub.diff(old=old_sub, changelog=changelog)
+            new_sub.diff(old=old_sub, changelog=changelog)
         return changelog
 
     @classmethod
