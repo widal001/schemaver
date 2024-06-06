@@ -9,7 +9,7 @@ from schemaver.changelog import ChangeLevel, Changelog, SchemaChange
 from schemaver.diffs.object import ObjectField
 
 if TYPE_CHECKING:
-    from schemaver.property import Property
+    from schemaver.schema import Property
 
 
 class Required(Enum):

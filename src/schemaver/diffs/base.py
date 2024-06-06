@@ -9,7 +9,7 @@ from schemaver.changelog import ChangeLevel, Changelog, SchemaChange
 if TYPE_CHECKING:
     from enum import Enum
 
-    from schemaver.property import Property
+    from schemaver.schema import Property
 
 
 class BaseDiff:

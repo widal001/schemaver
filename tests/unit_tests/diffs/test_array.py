@@ -6,7 +6,7 @@ from schemaver.changelog import ChangeLevel
 from schemaver.diffs.string import StringField
 from schemaver.diffs.numeric import NumericField
 from schemaver.diffs.array import ArrayField
-from schemaver.property import InstanceType, Property
+from schemaver.schema import InstanceType, Property
 
 from tests.unit_tests.diffs.helpers import (
     assert_changes,

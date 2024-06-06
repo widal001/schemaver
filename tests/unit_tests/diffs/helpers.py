@@ -4,7 +4,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 
 from schemaver.changelog import Changelog, ChangeLevel
-from schemaver.property import Property
+from schemaver.schema import Property
 
 
 def assert_changes(got: Changelog, wanted: dict[ChangeLevel, int]):

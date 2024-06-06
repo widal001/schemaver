@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from schemaver.changelog import Changelog
-from schemaver.property import Property
+from schemaver.schema import Property
 from schemaver.version import Version
 
 if TYPE_CHECKING:

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from schemaver.schema import InvalidJsonSchemaError, load_json_string_or_path
+from schemaver.utils import InvalidJsonSchemaError, load_json_string_or_path
 
 
 class TestLoadJsonStringOrPath:

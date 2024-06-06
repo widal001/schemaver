@@ -4,7 +4,7 @@ import pytest
 
 from schemaver.changelog import ChangeLevel
 
-from schemaver.property import InstanceType, Property
+from schemaver.schema import InstanceType, Property
 from schemaver.diffs.object import ObjectField
 from schemaver.diffs.string import StringField
 from schemaver.diffs.array import ArrayField

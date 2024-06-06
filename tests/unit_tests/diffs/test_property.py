@@ -7,7 +7,7 @@ import pytest
 
 from schemaver.changelog import ChangeLevel, Changelog
 from schemaver.diffs.property import ExtraProps, Required
-from schemaver.property import Property
+from schemaver.schema import Property
 
 from tests.unit_tests.diffs.helpers import assert_changes
 
